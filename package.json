@@ -1,15 +1,27 @@
 {
-  "name": "node-ai",
-  "version": "1.0.0",
-  "description": "just test whatsapp api",
+  "name": "whatsapp-chatbot",
+  "version": "0.0.1",
+  "description": "An example of webhook for WhatsApp Messenger quick start tutorial.",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "start": "node index.js"
   },
-  "author": "prashant.shekher",
-  "license": "ISC",
   "dependencies": {
+    "async": "^2.6.1",
+    "body-parse": "^0.1.0",
     "express": "^4.16.3",
     "request": "^2.88.0"
-  }
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/whatsapp-chatbot"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
 }

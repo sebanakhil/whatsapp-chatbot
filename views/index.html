@@ -1,0 +1,29 @@
+<!-- This is a static file -->
+<!-- served from your routes in server.js -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Welcome to WhatsApp!</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- import the webpage's javascript file -->
+    <script src="/script.js" defer></script>
+  </head>  
+  <body>
+    <h1>Hi there!</h1>
+    
+    <p>
+      I'm your cool new webpage.
+    </p>
+    <form action="/whatsapp-welcome-message" method="post">
+      Mobile: <input name="mobile" type="text" />
+      <input type="submit" />
+    </form>
+  </body>
+</html>
