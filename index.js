@@ -19,8 +19,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
   
     async.auto({
         whatsAppLoginAPI: function(callback) {
-            
-            
+
             var username = "admin",
                 password = "Welcome!1";
             var options = {
@@ -41,31 +40,33 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     if (error) callback(new Error(error));
                 } else {
                     if (!error && response.statusCode == 200) {
-                        console.log("Successfully!");
-                        callback(null, JSON.parse(body));
+                        console.log("Successfully whatsAppLoginAPI!");
+                        callback(null, body);
                     } else {
                         console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
                         callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
                     }
                 }
             });
-            
+
         },
         checkContactByAPI: ['whatsAppLoginAPI', function (results, callback) {
-                var stringData = JSON.stringify(results)
-                var jsonData = JSON.parse(stringData);
-                console.log(jsonData.whatsAppLoginAPI.users[0].token);
                 console.log("Mobile: "+req.body.mobile);
-                callback(null, '2');
+                ob = JSON.parse(results.whatsAppLoginAPI); 
+                var tokenJson;  
+                ob.users.forEach(function(item) {
+                    tokenJson = item.token ;
+                });
+                //callback(null, '2');
                 //OR
-                /*
+                
                 var username = "admin",
                 password = "Welcome!1";
                 var options = {
                     method: 'POST',
                     url: 'https://172.16.245.87:11002/v1/contacts',
                     headers:{       
-                        authorization: "Bearer " + jsonData.whatsAppLoginAPI.users[0].token,
+                        authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json' 
                     },
                     body: { blocking: 'wait', contacts: [ '+919716004560' ] },
@@ -79,6 +80,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     } else {
                         if (!error && response.statusCode == 200) {
                             console.log("Successfully checkContactByAPI!");
+                            console.log(body)
                             callback(null, body);
                         } else {
                             console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
@@ -86,7 +88,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         }
                     }
                 });
-                */
             }
         ],
     }, function(error, results) {
@@ -95,8 +96,8 @@ var whatsAppWelcomeMessage = function (req, res, next) {
             console.log(error);
             return next(error);
         } else {
-            console.log("Successfully!");
-            console.log(results);
+            //console.log("Successfully!");
+            //console.log(results);
             return next(null, results);
         }
     });
