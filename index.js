@@ -45,13 +45,14 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     } else {
                         console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
                         callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                        //callback(body);
                     }
                 }
             });
 
         },
         checkContactByAPI: ['whatsAppLoginAPI', function (results, callback) {
-                console.log("Mobile: "+req.body.mobile);
+                console.log("Mobile: "+req.body.mobile); //9887658765 -> invalid whatsapp user
                 ob = JSON.parse(results.whatsAppLoginAPI); 
                 var tokenJson;  
                 ob.users.forEach(function(item) {
@@ -80,6 +81,57 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     } else {
                         if (!error && response.statusCode == 200) {
                             console.log("Successfully checkContactByAPI!");
+                            callback(null, body);
+                        } else {
+                            console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+                            callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                        }
+                    }
+                });
+            }
+        ],
+        sendWhatAppMessageByAPI: ['checkContactByAPI', function (results, callback) {
+                ob = JSON.parse(results.whatsAppLoginAPI);
+                var tokenJson;
+                ob.users.forEach(function(item) {
+                    tokenJson = item.token ;
+                });
+
+                object = results.checkContactByAPI;
+                var waId;
+                object.contacts.forEach(function(item) {
+                    waId = item.wa_id ;
+                });
+                //callback(null, '2');
+                //OR
+
+                var options = {
+                    method: 'POST',
+                    url: 'https://172.16.245.87:11002/v1/messages',
+                    headers:{
+                        authorization: "Bearer " + tokenJson,
+                        'content-type': 'application/json'
+                    },
+                    body: {
+                      recipient_type: "individual", //"individual" OR "group"
+                      //to: waId, //"whatsapp_id" OR "whatsapp_group_id"
+                      to: "919716004560", //"whatsapp_id" OR "whatsapp_group_id"
+                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                      text: {
+                        body: "Test By Node.js"
+                      }
+                    },
+                    json: true,
+                    rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
+                };
+                console.log(options);
+                request(options, function (error, response, body) {
+                    console.log(error, response, body);
+                    if (error) {
+                        if (error) callback(new Error(error));
+                    } else {
+                        if (!error && response.statusCode == 200 || response.statusCode == 201) {
+                            console.log("Successfully sendWhatAppMessageByAPI!");
                             console.log(body)
                             callback(null, body);
                         } else {
