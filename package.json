@@ -7,10 +7,12 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "apiai": "^4.0.3",
     "async": "^2.6.1",
     "body-parse": "^0.1.0",
     "express": "^4.16.3",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
   },
   "engines": {
     "node": "8.x"

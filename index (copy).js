@@ -2,13 +2,15 @@
 
 // Imports dependencies and set up http server
 const 
-  express = require('express'),
   request = require('request'),
+  express = require('express'),
   bodyParser = require('body-parser'),
+  app = express(),
   async = require("async"),
   apiai = require("apiai"),
-  uuid = require('uuid'),
-  app = express();
+  uuid = require('uuid');
+
+
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -17,13 +19,13 @@ app.use(express.static('public'));
 app.use(bodyParser.json());       // to support JSON-encoded bodies
 //app.use(bodyParser.urlencoded()); // to support URL-encoded bodies - depricited 
 app.use(bodyParser.urlencoded({ extended: true })); // to support URL-encoded bodies
-
-//Dialogflow Config
-const apiAiService = apiai("1187853034b8400d99d3ebca1e690bf0", {
+/*
+//uuid.v1()
+const apiAiService = apiai("YOUR_ACCESS_TOKEN", {
     language: "en",
-    requestSource: "wa"
+    requestSource: "fb"
 });
-
+*/
 var whatsAppWelcomeMessage = function (req, res, next) {
   
     async.auto({
@@ -33,7 +35,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 password = "Welcome!1";
             var options = {
                 method: 'POST',
-                url: 'https://172.16.245.18:11002/v1/users/login',
+                url: 'https://172.16.245.87:11002/v1/users/login',
                 headers:{       
                     authorization: "Basic " + new Buffer(username + ":" + password).toString("base64"),
                     'content-type': 'application/json' 
@@ -74,12 +76,12 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 password = "Welcome!1";
                 var options = {
                     method: 'POST',
-                    url: 'https://172.16.245.18:11002/v1/contacts',
+                    url: 'https://172.16.245.87:11002/v1/contacts',
                     headers:{       
                         authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json' 
                     },
-                    body: { blocking: 'wait', contacts: [ '+919503255995' ] },
+                    body: { blocking: 'wait', contacts: [ '+919716004560' ] },
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
@@ -99,32 +101,14 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 });
             }
         ],
+        /*
         getEvenMessageByAPI: ['checkContactByAPI', function (results, callback) {
-                //console.log(uuid.v1());
-                //sendEventToApiAi(event, uuid.v1());
-
-                let event = { type: "WELCOME" };
-                let eventArg = {
-                    "name": event.type
-                    //"data": event.data
-                }
-                var request = apiAiService.eventRequest(eventArg, {sessionId: uuid.v1()});
-                request.on('response', function(response) {
-                    console.log(response);
-                    callback(null, response);
-                });
-                request.on('error', function(error) {
-                    console.log(error);
-                    callback(new Error(error));
-                });
-                request.end();
+                console.log(uuid.v1());
+                sendEventToApiAi(event, uuid.v1());
             }
         ],
-        sendWhatAppMessageByAPI: ['getEvenMessageByAPI', function (results, callback) {
-                //Dialog Message
-                console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
-                const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
-                
+        */
+        sendWhatAppMessageByAPI: ['checkContactByAPI', function (results, callback) {
                 ob = JSON.parse(results.whatsAppLoginAPI);
                 var tokenJson;
                 ob.users.forEach(function(item) {
@@ -136,77 +120,26 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 object.contacts.forEach(function(item) {
                     waId = item.wa_id ;
                 });
-                
                 //callback(null, '2');
                 //OR
 
-                /*
-                //NEW HSM
-                var obj = { 
-                  "to": waId,
-                  "type": "hsm",
-                  "hsm": { 
-                    "namespace": "whatsapp:hsm:fintech:wishfin",
-                    "element_name": "wishfin_product_thanks_whatsapp_template", 
-                    "fallback": "en", 
-                    "fallback_lc": "US", 
-                    "localizable_params": [ 
-                      {
-                        "default": "Mari"
-                      },
-                      {
-                        "default": "Personal Loan"
-                      },
-                      {
-                        "default": "Personal Loan"
-                      } 
-                    
-                    ]
-                  }
-                };
-                */
-
-
                 var options = {
                     method: 'POST',
-                    url: 'https://172.16.245.18:11002/v1/messages',
+                    url: 'https://172.16.245.87:11002/v1/messages',
                     headers:{
                         authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json'
                     },
-                    /*
                     body: {
                       recipient_type: "individual", //"individual" OR "group"
-                      to: waId, //"whatsapp_id" OR "whatsapp_group_id"
+                      //to: waId, //"whatsapp_id" OR "whatsapp_group_id"
                       to: "919716004560", //"whatsapp_id" OR "whatsapp_group_id"
                       type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
                       text: {
-                        body: testMessage
+                        body: "Test By Node.js"
                       }
                     },
-                    */
-                    body: { 
-                      to: waId,
-                      type: "hsm",
-                      hsm: { 
-                        namespace: "whatsapp:hsm:fintech:wishfin",
-                        element_name: "wishfin_product_thanks_whatsapp_template", 
-                        fallback: "en", 
-                        fallback_lc: "US", 
-                        localizable_params: [ 
-                          {
-                            default: "Himanshu"
-                          },
-                          {
-                            default: "Personal Loan"
-                          },
-                          {
-                            default: "Personal Loan"
-                          } 
-                        
-                        ]
-                      }
-                    },                    json: true,
+                    json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
                 console.log(options);
@@ -239,7 +172,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         }
     });
 }
-
 /*
 //Dialogflow Event
 let event = { type: "WELCOME" };
@@ -254,9 +186,7 @@ const sendEventToApiAi = (event, sessionId) => {
         var request = apiAiService.eventRequest(eventArg, {sessionId: sessionId});
 
         request.on('response', function(response) {
-            //dataString = JSON.stringify(response);
             console.log("sendEventToApiAi: response=" + JSON.stringify(response));
-            console.log(response.result.fulfillment.messages[0].speech);//fulfillment.messages.speech
             return resolve(response);
         });
 
