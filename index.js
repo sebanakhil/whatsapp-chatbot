@@ -91,9 +91,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     tokenJson = item.token ;
                 });
 
-                //if (!sessionIds.has(senderID)) {
-                //    sessionIds.set(senderID, uuid.v1());
-                //}
                 if (!sessionIds.has('tokenJson')) {
                     sessionIds.set('tokenJson', tokenJson);
                 }
@@ -139,7 +136,10 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     "name": event.type
                     //"data": event.data
                 }
-                var request = apiAiService.eventRequest(eventArg, {sessionId: uuid.v1()});
+                if (!sessionIds.has('senderID')) {
+                    sessionIds.set('senderID', uuid.v1());
+                }
+                var request = apiAiService.eventRequest(eventArg, {sessionId: sessionIds.get('senderID')});
                 request.on('response', function(response) {
                     console.log(response);
                     callback(null, response);
@@ -169,6 +169,9 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 object.contacts.forEach(function(item) {
                     waId = item.wa_id ;
                 });
+                if (!sessionIds.has('waId')) {
+                    sessionIds.set('waId', waId);
+                }
                 //callback(null, '2');
                 //OR
 
@@ -297,19 +300,14 @@ app.post('/whatsapp-webhook', (req, res) => {
   // Parse the request body from the POST
   if(req.body.messages[0].type == 'text' && req.body.messages[0].errors === undefined){
     console.log(sessionIds.get('tokenJson'));
-    /*
+    console.log(sessionIds.get('waId'));
+    console.log(sessionIds.get('senderID'));
+    console.log(req.body.messages[0].text.body);
+    
     async.auto({
-        getMessageByAPI: function(callback) {
+        getTextMessageByAPI: function(callback) {
 
-            //console.log(uuid.v1());
-            //sendEventToApiAi(event, uuid.v1());
-
-            let event = { type: "WELCOME" };
-            let eventArg = {
-                "name": event.type
-                //"data": event.data
-            }
-            var request = apiAiService.eventRequest(eventArg, {sessionId: uuid.v1()});
+            var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
             request.on('response', function(response) {
                 console.log(response);
                 callback(null, response);
@@ -321,24 +319,18 @@ app.post('/whatsapp-webhook', (req, res) => {
             request.end();
 
         },
-        sendWhatAppMessageByAPI: ['getMessageByAPI', function (results, callback) {
+        sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
                 //Dialog Message
-                console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
-                const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
-
-                object = results.checkContactByAPI;
-                var waId;
-                object.contacts.forEach(function(item) {
-                    waId = item.wa_id ;
-                });
-                callback(null, '2');
+                console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
+                const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;             
+                //callback(null, '2');
                 //OR
                 var messageType = 'non-hsm';
                 var obj;
-                if(messageType !== 'hsm'){
+                if(messageType == 'hsm'){
                     //NEW HSM
                     obj = {
-                      "to": waId,
+                      "to": sessionIds.get('waId'),
                       "type": "hsm",
                       "hsm": {
                         "namespace": "whatsapp:hsm:fintech:wishfin",
@@ -361,8 +353,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                 } else {
                     obj = {
                       recipient_type: "individual", //"individual" OR "group"
-                      to: waId, //"whatsapp_id" OR "whatsapp_group_id"
-                      to: "919716004560", //"whatsapp_id" OR "whatsapp_group_id"
+                      to: sessionIds.get('waId'), //"whatsapp_id" OR "whatsapp_group_id"
                       type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
                       text: {
                         body: testMessage
@@ -373,7 +364,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                     method: 'POST',
                     url: config.WA_SERVER_URL + '/v1/messages',
                     headers:{
-                        authorization: "Bearer " + tokenJson,
+                        authorization: "Bearer " + sessionIds.get('tokenJson'),
                         'content-type': 'application/json'
                     },
                     body: obj,
@@ -403,15 +394,14 @@ app.post('/whatsapp-webhook', (req, res) => {
         if (error) {
             console.log("Error!");
             console.log(error);
-            return next(error);
+            //return next(error);
         } else {
             //console.log("Successfully!");
-            //console.log(results);
-            return next(null, results);
+            console.log(results);
+            //return next(null, results);
         }
     });
-    */
-
+    
   }
 });
 
