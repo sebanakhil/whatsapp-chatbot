@@ -8,7 +8,23 @@ const
   async = require("async"),
   apiai = require("apiai"),
   uuid = require('uuid'),
-  app = express();
+  app = express(),
+  config = require('./config'),  
+  phone = require('phone');
+
+// Messenger API parameters
+if (!config.WA_SERVER_URL) {
+    throw new Error('missing WA_SERVER_URL');
+}
+if (!config.WA_USER_NAME) {
+    throw new Error('missing WA_USER_NAME');
+}
+if (!config.WA_PASSWORD_NAME) {
+    throw new Error('missing WA_PASSWORD_NAME');
+}
+if (!config.APIAI_CLIENT_ACCESS_TOKEN) {
+    throw new Error('missing APIAI_CLIENT_ACCESS_TOKEN');
+}
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -19,7 +35,7 @@ app.use(bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // to support URL-encoded bodies
 
 //Dialogflow Config
-const apiAiService = apiai("1187853034b8400d99d3ebca1e690bf0", {
+const apiAiService = apiai(config.APIAI_CLIENT_ACCESS_TOKEN, {
     language: "en",
     requestSource: "wa"
 });
@@ -29,11 +45,11 @@ var whatsAppWelcomeMessage = function (req, res, next) {
     async.auto({
         whatsAppLoginAPI: function(callback) {
 
-            var username = "admin",
-                password = "Welcome!1";
+            var username = config.WA_USER_NAME,
+                password = config.WA_PASSWORD_NAME,
             var options = {
                 method: 'POST',
-                url: 'https://172.16.245.18:11002/v1/users/login',
+                url: config.WA_SERVER_URL + '/v1/users/login',
                 headers:{       
                     authorization: "Basic " + new Buffer(username + ":" + password).toString("base64"),
                     'content-type': 'application/json' 
@@ -62,6 +78,12 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         },
         checkContactByAPI: ['whatsAppLoginAPI', function (results, callback) {
                 console.log("Mobile: "+req.body.mobile); //9887658765 -> invalid whatsapp user
+                phoneValueFormated = phone(req.body.mobile, 'IND');
+
+                if(phoneValueFormated[0] === undefined){
+                    callback(new Error("Mobile Number undefined"));
+                }
+                //console.log(phoneValueFormated[0]);
                 ob = JSON.parse(results.whatsAppLoginAPI); 
                 var tokenJson;  
                 ob.users.forEach(function(item) {
@@ -74,12 +96,12 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 password = "Welcome!1";
                 var options = {
                     method: 'POST',
-                    url: 'https://172.16.245.18:11002/v1/contacts',
+                    url: config.WA_SERVER_URL + '/v1/contacts',
                     headers:{       
                         authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json' 
                     },
-                    body: { blocking: 'wait', contacts: [ '+919503255995' ] },
+                    body: { blocking: 'wait', contacts: [ phoneValueFormated[0] ] },
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
@@ -169,7 +191,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
 
                 var options = {
                     method: 'POST',
-                    url: 'https://172.16.245.18:11002/v1/messages',
+                    url: config.WA_SERVER_URL + '/v1/messages',
                     headers:{
                         authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json'
@@ -206,7 +228,8 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         
                         ]
                       }
-                    },                    json: true,
+                    },
+                    json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
                 console.log(options);
@@ -284,7 +307,7 @@ app. post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, re
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
   // Parse the request body from the POST
-  let body = req.body;
+  if(req.body.messages[0].type == 'text' && req.body.messages[0].errors === undefined){}
 });
 
 // Accepts GET requests at the /webhook endpoint
