@@ -39,6 +39,7 @@ const apiAiService = apiai(config.APIAI_CLIENT_ACCESS_TOKEN, {
     language: "en",
     requestSource: "wa"
 });
+const sessionIds = new Map();
 
 var whatsAppWelcomeMessage = function (req, res, next) {
   
@@ -46,7 +47,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         whatsAppLoginAPI: function(callback) {
 
             var username = config.WA_USER_NAME,
-                password = config.WA_PASSWORD_NAME,
+                password = config.WA_PASSWORD_NAME;
             var options = {
                 method: 'POST',
                 url: config.WA_SERVER_URL + '/v1/users/login',
@@ -89,6 +90,14 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 ob.users.forEach(function(item) {
                     tokenJson = item.token ;
                 });
+
+                //if (!sessionIds.has(senderID)) {
+                //    sessionIds.set(senderID, uuid.v1());
+                //}
+                if (!sessionIds.has('tokenJson')) {
+                    sessionIds.set('tokenJson', tokenJson);
+                }
+
                 //callback(null, '2');
                 //OR
                 
@@ -146,68 +155,27 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 //Dialog Message
                 console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
-                
+                /*
                 ob = JSON.parse(results.whatsAppLoginAPI);
                 var tokenJson;
                 ob.users.forEach(function(item) {
                     tokenJson = item.token ;
                 });
+                */
+                //console.log(sessionIds.get('tokenJson'));
 
                 object = results.checkContactByAPI;
                 var waId;
                 object.contacts.forEach(function(item) {
                     waId = item.wa_id ;
                 });
-                
                 //callback(null, '2');
                 //OR
 
-                /*
-                //NEW HSM
-                var obj = { 
-                  "to": waId,
-                  "type": "hsm",
-                  "hsm": { 
-                    "namespace": "whatsapp:hsm:fintech:wishfin",
-                    "element_name": "wishfin_product_thanks_whatsapp_template", 
-                    "fallback": "en", 
-                    "fallback_lc": "US", 
-                    "localizable_params": [ 
-                      {
-                        "default": "Mari"
-                      },
-                      {
-                        "default": "Personal Loan"
-                      },
-                      {
-                        "default": "Personal Loan"
-                      } 
-                    
-                    ]
-                  }
-                };
-                */
-
-
-                var options = {
-                    method: 'POST',
-                    url: config.WA_SERVER_URL + '/v1/messages',
-                    headers:{
-                        authorization: "Bearer " + tokenJson,
-                        'content-type': 'application/json'
-                    },
-                    /*
-                    body: {
-                      recipient_type: "individual", //"individual" OR "group"
-                      to: waId, //"whatsapp_id" OR "whatsapp_group_id"
-                      to: "919716004560", //"whatsapp_id" OR "whatsapp_group_id"
-                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
-                      text: {
-                        body: testMessage
-                      }
-                    },
-                    */
-                    body: { 
+                var messageType = 'non-hsm';
+                var obj;
+                if(messageType == 'hsm'){
+                    obj = {
                       to: waId,
                       type: "hsm",
                       hsm: { 
@@ -228,7 +196,26 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         
                         ]
                       }
+                    };
+                } else {
+                    obj = {
+                      recipient_type: "individual", //"individual" OR "group"
+                      to: waId, //"whatsapp_id" OR "whatsapp_group_id"
+                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                      text: {
+                        body: testMessage
+                      }
+                    }
+                }
+
+                var options = {
+                    method: 'POST',
+                    url: config.WA_SERVER_URL + '/v1/messages',
+                    headers:{
+                        authorization: "Bearer " + sessionIds.get('tokenJson'),
+                        'content-type': 'application/json'
                     },
+                    body: obj,
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
@@ -248,6 +235,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         }
                     }
                 });
+
             }
         ],
     }, function(error, results) {
@@ -307,7 +295,124 @@ app. post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, re
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
   // Parse the request body from the POST
-  if(req.body.messages[0].type == 'text' && req.body.messages[0].errors === undefined){}
+  if(req.body.messages[0].type == 'text' && req.body.messages[0].errors === undefined){
+    console.log(sessionIds.get('tokenJson'));
+    /*
+    async.auto({
+        getMessageByAPI: function(callback) {
+
+            //console.log(uuid.v1());
+            //sendEventToApiAi(event, uuid.v1());
+
+            let event = { type: "WELCOME" };
+            let eventArg = {
+                "name": event.type
+                //"data": event.data
+            }
+            var request = apiAiService.eventRequest(eventArg, {sessionId: uuid.v1()});
+            request.on('response', function(response) {
+                console.log(response);
+                callback(null, response);
+            });
+            request.on('error', function(error) {
+                console.log(error);
+                callback(new Error(error));
+            });
+            request.end();
+
+        },
+        sendWhatAppMessageByAPI: ['getMessageByAPI', function (results, callback) {
+                //Dialog Message
+                console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
+                const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
+
+                object = results.checkContactByAPI;
+                var waId;
+                object.contacts.forEach(function(item) {
+                    waId = item.wa_id ;
+                });
+                callback(null, '2');
+                //OR
+                var messageType = 'non-hsm';
+                var obj;
+                if(messageType !== 'hsm'){
+                    //NEW HSM
+                    obj = {
+                      "to": waId,
+                      "type": "hsm",
+                      "hsm": {
+                        "namespace": "whatsapp:hsm:fintech:wishfin",
+                        "element_name": "wishfin_product_thanks_whatsapp_template",
+                        "fallback": "en",
+                        "fallback_lc": "US",
+                        "localizable_params": [
+                          {
+                            "default": "Mari"
+                          },
+                          {
+                            "default": "Personal Loan"
+                          },
+                          {
+                            "default": "Personal Loan"
+                          }
+                        ]
+                      }
+                    };
+                } else {
+                    obj = {
+                      recipient_type: "individual", //"individual" OR "group"
+                      to: waId, //"whatsapp_id" OR "whatsapp_group_id"
+                      to: "919716004560", //"whatsapp_id" OR "whatsapp_group_id"
+                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                      text: {
+                        body: testMessage
+                      }
+                    };
+                }
+                var options = {
+                    method: 'POST',
+                    url: config.WA_SERVER_URL + '/v1/messages',
+                    headers:{
+                        authorization: "Bearer " + tokenJson,
+                        'content-type': 'application/json'
+                    },
+                    body: obj,
+                    json: true,
+                    rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
+                };
+                console.log(options);
+                request(options, function (error, response, body) {
+                    console.log(error, response, body);
+                    if (error) {
+                        if (error) callback(new Error(error));
+                    } else {
+                        if (!error && response.statusCode == 200 || response.statusCode == 201) {
+                            console.log("Successfully sendWhatAppMessageByAPI!");
+                            console.log(body)
+                            callback(null, body);
+                        } else {
+                            console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+                            callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                        }
+                    }
+                });
+
+            }
+        ],
+    }, function(error, results) {
+        if (error) {
+            console.log("Error!");
+            console.log(error);
+            return next(error);
+        } else {
+            //console.log("Successfully!");
+            //console.log(results);
+            return next(null, results);
+        }
+    });
+    */
+
+  }
 });
 
 // Accepts GET requests at the /webhook endpoint
