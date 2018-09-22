@@ -298,7 +298,7 @@ app. post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, re
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
   // Parse the request body from the POST
-  if(req.body.messages[0].type == 'text' && req.body.messages[0].errors === undefined){
+  if(req.body.statuses === undefined){
     console.log(sessionIds.get('tokenJson'));
     console.log(sessionIds.get('waId'));
     console.log(sessionIds.get('senderID'));
