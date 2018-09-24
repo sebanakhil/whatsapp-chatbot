@@ -12,6 +12,7 @@ const
   config = require('./config'),  
   phone = require('phone');
 
+const ngrok = require('ngrok');
 // Messenger API parameters
 if (!config.WA_SERVER_URL) {
     throw new Error('missing WA_SERVER_URL');
@@ -291,7 +292,7 @@ app.get('/', function(request, response) {
 // assuming POST:   moblie=9716004560           <-- URL encoding
 //
 // or       POST: {"moblie":"9716004560"}       <-- JSON encoding
-app. post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, res) {
+app.post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, res) {
     res.send("This page is authenticated!")
 });
 
@@ -410,7 +411,20 @@ app.get('/whatsapp-webhook', (req, res) => {
   console.log('whatsapp webhook is not listening')
 });
 
-// listen for requests :)
-var listener = app.listen(process.env.PORT || 3030, function() {
-  console.log('Your app is listening on port ' + listener.address().port);
+const server = app.listen(process.env.PORT || 3031, () => {
+    console.log('Express listening at ', server.address().port);
+});
+
+//https://medium.com/@amarjotsingh90/create-secure-tunnel-to-node-js-application-with-ngork-e4806b21bef0
+ngrok.connect({
+    proto : 'http',
+    addr : 3031,
+}, (err, url) => {
+    if (err) {
+        console.error('Error while connecting Ngrok',err);
+        return new Error('Ngrok Failed');
+    } else {
+        console.log('Tunnel Created -> ', url);
+        console.log('Tunnel Inspector ->  http://127.0.0.1:3031');
+    }
 });
