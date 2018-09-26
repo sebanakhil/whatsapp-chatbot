@@ -15,7 +15,6 @@
     "body-parse": "^0.1.0",
     "express": "^4.16.3",
     "ngrok": "^2.3.0",
-    "nodemon": "^1.18.4",
     "phone": "^2.1.0",
     "request": "^2.88.0",
     "uuid": "^3.3.2"
@@ -30,5 +29,8 @@
     "node",
     "glitch",
     "express"
-  ]
+  ],
+  "devDependencies": {
+    "nodemon": "^1.18.4"
+  }
 }
