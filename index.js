@@ -12,6 +12,8 @@ const
   config = require('./config'),  
   phone = require('phone');
 
+var _ = require('lodash');
+
 const ngrok = require('ngrok');
 // Messenger API parameters
 if (!config.WA_SERVER_URL) {
@@ -86,16 +88,18 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     callback(new Error("Mobile Number undefined"));
                 }
                 //console.log(phoneValueFormated[0]);
-                ob = JSON.parse(results.whatsAppLoginAPI); 
-                var tokenJson;  
-                ob.users.forEach(function(item) {
-                    tokenJson = item.token ;
-                });
+                //console.log(typeof results.whatsAppLoginAPI);
+                //console.log(typeof JSON.parse(results.whatsAppLoginAPI).users);
+                tokenJson = _.chain(JSON.parse(results.whatsAppLoginAPI).users)
+                              .map(function(o) {
+                                return o.token;
+                              })
+                              .head()
+                              .value();
 
                 if (!sessionIds.has('tokenJson')) {
                     sessionIds.set('tokenJson', tokenJson);
                 }
-
                 //callback(null, '2');
                 //OR
                 
