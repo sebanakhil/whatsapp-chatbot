@@ -10,11 +10,11 @@ const
   uuid = require('uuid'),
   app = express(),
   config = require('./config'),  
-  phone = require('phone');
-
-var _ = require('lodash');
+  phone = require('phone'),
+  _ = require('lodash');
 
 const ngrok = require('ngrok');
+
 // Messenger API parameters
 if (!config.WA_SERVER_URL) {
     throw new Error('missing WA_SERVER_URL');
@@ -46,6 +46,20 @@ const sessionIds = new Map();
 
 var whatsAppWelcomeMessage = function (req, res, next) {
   
+    if(_.isUndefined(req.body.mobile)){
+        res.json({'error':'mobile umber is required'});
+    }
+
+    var pattern = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$/;
+    if (!pattern.test(req.body.mobile)) {
+      return res.json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
+    }
+
+    phoneValueFormated = phone(req.body.mobile, 'IND');
+    if(_.isUndefined(phoneValueFormated[0])){
+        res.json({'error':'mobile umber is formated properly'});
+    }
+
     async.auto({
         whatsAppLoginAPI: function(callback) {
 
@@ -62,10 +76,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
             };
 
             request(options, function (error, response, body) {
-                //console.log(error, response, body);
                 if (error) {
-                    //throw new Error(error);
-                    //if (error) callback(error);
                     if (error) callback(new Error(error));
                 } else {
                     if (!error && response.statusCode == 200) {
@@ -74,21 +85,13 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     } else {
                         console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
                         callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
-                        //callback(body);
                     }
                 }
             });
 
         },
         checkContactByAPI: ['whatsAppLoginAPI', function (results, callback) {
-                console.log("Mobile: "+req.body.mobile); //9887658765 -> invalid whatsapp user
-                phoneValueFormated = phone(req.body.mobile, 'IND');
 
-                if(phoneValueFormated[0] === undefined){
-                    callback(new Error("Mobile Number undefined"));
-                }
-                //console.log(phoneValueFormated[0]);
-                //console.log(typeof results.whatsAppLoginAPI);
                 //console.log(typeof JSON.parse(results.whatsAppLoginAPI).users);
                 tokenJson = _.chain(JSON.parse(results.whatsAppLoginAPI).users)
                               .map(function(o) {
@@ -100,11 +103,9 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 if (!sessionIds.has('tokenJson')) {
                     sessionIds.set('tokenJson', tokenJson);
                 }
-                //callback(null, '2');
-                //OR
-                
-                var username = "admin",
-                password = "Welcome!1";
+
+                var username = config.WA_USER_NAME,
+                    password = config.WA_PASSWORD_NAME;
                 var options = {
                     method: 'POST',
                     url: config.WA_SERVER_URL + '/v1/contacts',
@@ -117,7 +118,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
                 request(options, function (error, response, body) {
-                    //console.log(error, response, body);
                     if (error) {
                         if (error) callback(new Error(error));
                     } else {
@@ -133,8 +133,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
             }
         ],
         getEvenMessageByAPI: ['checkContactByAPI', function (results, callback) {
-                //console.log(uuid.v1());
-                //sendEventToApiAi(event, uuid.v1());
 
                 let event = { type: "WELCOME" };
                 let eventArg = {
@@ -160,25 +158,17 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 //Dialog Message
                 console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
-                /*
-                ob = JSON.parse(results.whatsAppLoginAPI);
-                var tokenJson;
-                ob.users.forEach(function(item) {
-                    tokenJson = item.token ;
-                });
-                */
-                //console.log(sessionIds.get('tokenJson'));
 
-                object = results.checkContactByAPI;
-                var waId;
-                object.contacts.forEach(function(item) {
-                    waId = item.wa_id ;
-                });
+                waId = _.chain(results.checkContactByAPI.contacts)
+                              .map(function(o) {
+                                return o.wa_id;
+                              })
+                              .head()
+                              .value();
+
                 if (!sessionIds.has('waId')) {
                     sessionIds.set('waId', waId);
                 }
-                //callback(null, '2');
-                //OR
 
                 var messageType = 'non-hsm';
                 var obj;
@@ -227,7 +217,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
-                console.log(options);
                 request(options, function (error, response, body) {
                     console.log(error, response, body);
                     if (error) {
@@ -243,7 +232,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         }
                     }
                 });
-
             }
         ],
     }, function(error, results) {
@@ -258,35 +246,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         }
     });
 }
-
-/*
-//Dialogflow Event
-let event = { type: "WELCOME" };
-const sendEventToApiAi = (event, sessionId) => {
-    return new Promise(function(resolve, reject) {
-
-        let eventArg = {
-            "name": event.type
-            //"data": event.data
-        };
-        
-        var request = apiAiService.eventRequest(eventArg, {sessionId: sessionId});
-
-        request.on('response', function(response) {
-            //dataString = JSON.stringify(response);
-            console.log("sendEventToApiAi: response=" + JSON.stringify(response));
-            console.log(response.result.fulfillment.messages[0].speech);//fulfillment.messages.speech
-            return resolve(response);
-        });
-
-        request.on('error', function(error) {
-            return reject(error);
-        });
-
-        request.end();
-    });
-}
-*/
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get('/', function(request, response) {
