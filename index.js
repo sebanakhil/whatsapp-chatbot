@@ -144,7 +144,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 }
                 var request = apiAiService.eventRequest(eventArg, {sessionId: sessionIds.get('senderID')});
                 request.on('response', function(response) {
-                    console.log(response);
+                    //console.log(response);
                     callback(null, response);
                 });
                 request.on('error', function(error) {
@@ -224,7 +224,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     } else {
                         if (!error && response.statusCode == 200 || response.statusCode == 201) {
                             console.log("Successfully sendWhatAppMessageByAPI!");
-                            console.log(body)
+                            //console.log(body)
                             callback(null, body);
                         } else {
                             console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
@@ -335,7 +335,6 @@ app.post('/whatsapp-webhook', (req, res) => {
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
-                console.log(options);
                 request(options, function (error, response, body) {
                     console.log(error, response, body);
                     if (error) {
@@ -343,7 +342,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                     } else {
                         if (!error && response.statusCode == 200 || response.statusCode == 201) {
                             console.log("Successfully sendWhatAppMessageByAPI!");
-                            console.log(body)
+                            //console.log(body)
                             callback(null, body);
                         } else {
                             console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
