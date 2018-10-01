@@ -148,7 +148,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     callback(null, response);
                 });
                 request.on('error', function(error) {
-                    console.log(error);
+                    //console.log(error);
                     callback(new Error(error));
                 });
                 request.end();
@@ -156,7 +156,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         ],
         sendWhatAppMessageByAPI: ['getEvenMessageByAPI', function (results, callback) {
                 //Dialog Message
-                console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
+                //console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
 
                 waId = _.chain(results.checkContactByAPI.contacts)
@@ -218,7 +218,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
                 request(options, function (error, response, body) {
-                    console.log(error, response, body);
+                    //console.log(error, response, body);
                     if (error) {
                         if (error) callback(new Error(error));
                     } else {
@@ -273,11 +273,11 @@ app.post('/whatsapp-webhook', (req, res) => {
 
             var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
             request.on('response', function(response) {
-                console.log(response);
+                //console.log(response);
                 callback(null, response);
             });
             request.on('error', function(error) {
-                console.log(error);
+                //console.log(error);
                 callback(new Error(error));
             });
             request.end();
@@ -285,7 +285,7 @@ app.post('/whatsapp-webhook', (req, res) => {
         },
         sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
                 //Dialog Message
-                console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
+                //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;             
                 //callback(null, '2');
                 //OR
@@ -336,7 +336,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
                 request(options, function (error, response, body) {
-                    console.log(error, response, body);
+                    //console.log(error, response, body);
                     if (error) {
                         if (error) callback(new Error(error));
                     } else {
@@ -369,8 +369,8 @@ app.post('/whatsapp-webhook', (req, res) => {
 });
 
 // Accepts GET requests at the /webhook endpoint
-app.get('/whatsapp-webhook', (req, res) => {
-  console.log('whatsapp webhook is not listening')
+app.get('/dialogflow-webhook', (req, res) => {
+  console.log('dialogflow webhook is not listening')
 });
 
 const server = app.listen(process.env.PORT || 3031, () => {
