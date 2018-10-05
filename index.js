@@ -1,6 +1,6 @@
 // 'use strict';
 
-// Imports dependencies and set up http server
+// 1. Include Packages
 const 
   express = require('express'),
   request = require('request'),
@@ -8,14 +8,13 @@ const
   async = require("async"),
   apiai = require("apiai"),
   uuid = require('uuid'),
-  app = express(),
-  config = require('./config'),  
   phone = require('phone'),
-  _ = require('lodash');
+  _ = require('lodash'),
+  ngrok = require('ngrok');
 
-const ngrok = require('ngrok');
+// 2. Include Configuration
+var config = require('./config');
 
-// Messenger API parameters
 if (!config.WA_SERVER_URL) {
     throw new Error('missing WA_SERVER_URL');
 }
@@ -29,21 +28,25 @@ if (!config.APIAI_CLIENT_ACCESS_TOKEN) {
     throw new Error('missing APIAI_CLIENT_ACCESS_TOKEN');
 }
 
+// 3. Initialize the application
+var app = express();
+
+// 4. Initialize the middleware application
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
-
 // Firstly you need to add some middleware to parse the post data of the body.
 app.use(bodyParser.json());       // to support JSON-encoded bodies
 //app.use(bodyParser.urlencoded()); // to support URL-encoded bodies - depricited 
 app.use(bodyParser.urlencoded({ extended: true })); // to support URL-encoded bodies
 
-//Dialogflow Config
+// 5. Initialize the Dialogflow Config
 const apiAiService = apiai(config.APIAI_CLIENT_ACCESS_TOKEN, {
     language: "en",
     requestSource: "wa"
 });
 const sessionIds = new Map();
 
+// 6. WhatsApp Welcome Message Middleware
 var whatsAppWelcomeMessage = function (req, res, next) {
   
     if(_.isUndefined(req.body.mobile)){
@@ -247,11 +250,13 @@ var whatsAppWelcomeMessage = function (req, res, next) {
     });
 }
 
+// 7. Routes
 // http://expressjs.com/en/starter/basic-routing.html
 app.get('/', function(request, response) {
   response.sendFile(__dirname + '/views/index.html');
 });
 
+// 8. Whatsapp Welcome Message Routes
 // assuming POST:   moblie=9716004560           <-- URL encoding
 //
 // or       POST: {"moblie":"9716004560"}       <-- JSON encoding
@@ -259,6 +264,7 @@ app.post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, res
     res.send("This page is authenticated!")
 });
 
+// 9. Whatsapp Webhook Routes
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
   // Parse the request body from the POST
@@ -368,15 +374,18 @@ app.post('/whatsapp-webhook', (req, res) => {
   }
 });
 
+// 10. Dialogflow Webhook Routes
 // Accepts GET requests at the /webhook endpoint
 app.get('/dialogflow-webhook', (req, res) => {
   console.log('dialogflow webhook is not listening')
 });
 
+// 11. Start the server
 const server = app.listen(process.env.PORT || 3031, () => {
     console.log('Express listening at ', server.address().port);
 });
 
+// 12. Start the server with secure tunnel
 //https://medium.com/@amarjotsingh90/create-secure-tunnel-to-node-js-application-with-ngork-e4806b21bef0
 ngrok.connect({
     proto : 'http',
