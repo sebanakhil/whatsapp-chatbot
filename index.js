@@ -290,6 +290,9 @@ app.post('/whatsapp-webhook', (req, res) => {
 
         },
         sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
+
+                console.log(results.getTextMessageByAPI.result);
+
                 //Dialog Message
                 //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;             
@@ -376,8 +379,34 @@ app.post('/whatsapp-webhook', (req, res) => {
 
 // 10. Dialogflow Webhook Routes
 // Accepts GET requests at the /webhook endpoint
-app.get('/dialogflow-webhook', (req, res) => {
-  console.log('dialogflow webhook is not listening')
+app.post('/dialogflow-webhook', (req, res) => {
+    console.log('dialogflow webhook is not listening');
+    let body = req.body
+
+    // Retrieving parameters from the request made by the agent
+    let action = body.result.action
+    console.log(action);
+    let parameters = body.result.parameters
+    console.log(parameters);
+    let city = body.result.parameters['geo-city']; // city is a required param
+    console.log(city);
+
+    // Performing the action
+    if (action === 'yahooWeatherForecast') {
+        dataToSend = `action is ${action}`;
+        console.log("RELIVENT");
+    } else {
+        dataToSend = `undefined action ${action}`;
+        console.log(`undefined action ${action}`);
+    }
+
+    // Sending back the results to the agent
+    res.status(200).json({
+            speech: dataToSend,
+            displayText: dataToSend,
+            source: 'weather-detail'
+        }
+    );
 });
 
 // 11. Start the server
