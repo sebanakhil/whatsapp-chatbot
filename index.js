@@ -400,11 +400,14 @@ app.post('/dialogflow-webhook', (req, res) => {
         );
     }
 
+    var queryString = 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'geo-city\')';
+    var query = _.replace(queryString, /geo-city/g, city);
+
     var options = {
         method: 'POST',
         url: 'https://query.yahooapis.com/v1/public/yql',
         form: {
-            q: 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'${city}\')',
+            q: query,
             format: 'json'
         }
     };
@@ -419,7 +422,8 @@ app.post('/dialogflow-webhook', (req, res) => {
         res.status(200).json({
                 speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
                 displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
-                source: 'weather-detail'
+                source: 'weather-detail',
+                query: query,
             }
         );
     });
