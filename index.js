@@ -380,33 +380,49 @@ app.post('/whatsapp-webhook', (req, res) => {
 // 10. Dialogflow Webhook Routes
 // Accepts GET requests at the /webhook endpoint
 app.post('/dialogflow-webhook', (req, res) => {
-    console.log('dialogflow webhook is not listening');
+    console.log('dialogflow webhook is listening');
     let body = req.body
 
     // Retrieving parameters from the request made by the agent
     let action = body.result.action
-    console.log(action);
     let parameters = body.result.parameters
-    console.log(parameters);
     let city = body.result.parameters['geo-city']; // city is a required param
     console.log(city);
 
     // Performing the action
-    if (action === 'yahooWeatherForecast') {
-        dataToSend = `action is ${action}`;
-        console.log("RELIVENT");
-    } else {
-        dataToSend = `undefined action ${action}`;
-        console.log(`undefined action ${action}`);
+    if (action !== 'yahooWeatherForecast') {
+        // Sending back the results to the agent
+        res.status(200).json({
+                speech: `undefined action ${action}`,
+                displayText: `undefined action ${action}`,
+                source: 'weather-detail'
+            }
+        );
     }
 
-    // Sending back the results to the agent
-    res.status(200).json({
-            speech: dataToSend,
-            displayText: dataToSend,
-            source: 'weather-detail'
+    var options = {
+        method: 'POST',
+        url: 'https://query.yahooapis.com/v1/public/yql',
+        form: {
+            q: 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'${city}\')',
+            format: 'json'
         }
-    );
+    };
+    request(options, function (error, response, body) {
+        if (error) throw new Error(error);
+        data = JSON.parse(body);
+        //if (!error && response.statusCode == 200) {
+        // Sending back the results to the agent
+        var location = data.query.results.channel.location;
+        var condition = data.query.results.channel.item.condition;
+        var temperature = data.query.results.channel.units.temperature;
+        res.status(200).json({
+                speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
+                displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
+                source: 'weather-detail'
+            }
+        );
+    });
 });
 
 // 11. Start the server
