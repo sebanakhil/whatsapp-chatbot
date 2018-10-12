@@ -420,8 +420,8 @@ app.post('/dialogflow-webhook', (req, res) => {
         var condition = data.query.results.channel.item.condition;
         var temperature = data.query.results.channel.units.temperature;
         res.status(200).json({
-                speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
-                displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + temperature,
+                speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
                 source: 'weather-detail',
                 query: query,
             }
