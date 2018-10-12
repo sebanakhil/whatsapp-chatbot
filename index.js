@@ -273,107 +273,112 @@ app.post('/whatsapp-webhook', (req, res) => {
     console.log(sessionIds.get('waId'));
     console.log(sessionIds.get('senderID'));
     console.log(req.body.messages[0].text.body);
-    
-    async.auto({
-        getTextMessageByAPI: function(callback) {
 
-            var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
-            request.on('response', function(response) {
-                //console.log(response);
-                callback(null, response);
-            });
-            request.on('error', function(error) {
-                //console.log(error);
-                callback(new Error(error));
-            });
-            request.end();
+    if(!_.isUndefined(req.body.messages[0].text.body)){
+        async.auto({
+            getTextMessageByAPI: function(callback) {
 
-        },
-        sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
 
-                console.log(results.getTextMessageByAPI.result);
 
-                //Dialog Message
-                //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
-                const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;             
-                //callback(null, '2');
-                //OR
-                var messageType = 'non-hsm';
-                var obj;
-                if(messageType == 'hsm'){
-                    //NEW HSM
-                    obj = {
-                      "to": sessionIds.get('waId'),
-                      "type": "hsm",
-                      "hsm": {
-                        "namespace": "whatsapp:hsm:fintech:wishfin",
-                        "element_name": "wishfin_product_thanks_whatsapp_template",
-                        "fallback": "en",
-                        "fallback_lc": "US",
-                        "localizable_params": [
-                          {
-                            "default": "Mari"
-                          },
-                          {
-                            "default": "Personal Loan"
-                          },
-                          {
-                            "default": "Personal Loan"
-                          }
-                        ]
-                      }
-                    };
-                } else {
-                    obj = {
-                      recipient_type: "individual", //"individual" OR "group"
-                      to: sessionIds.get('waId'), //"whatsapp_id" OR "whatsapp_group_id"
-                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
-                      text: {
-                        body: testMessage
-                      }
-                    };
-                }
-                var options = {
-                    method: 'POST',
-                    url: config.WA_SERVER_URL + '/v1/messages',
-                    headers:{
-                        authorization: "Bearer " + sessionIds.get('tokenJson'),
-                        'content-type': 'application/json'
-                    },
-                    body: obj,
-                    json: true,
-                    rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
-                };
-                request(options, function (error, response, body) {
-                    //console.log(error, response, body);
-                    if (error) {
-                        if (error) callback(new Error(error));
-                    } else {
-                        if (!error && response.statusCode == 200 || response.statusCode == 201) {
-                            console.log("Successfully sendWhatAppMessageByAPI!");
-                            //console.log(body)
-                            callback(null, body);
-                        } else {
-                            console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
-                            callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
-                        }
-                    }
+                var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
+                request.on('response', function(response) {
+                    //console.log(response);
+                    callback(null, response);
                 });
+                request.on('error', function(error) {
+                    //console.log(error);
+                    callback(new Error(error));
+                });
+                request.end();
 
+            },
+            sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
+
+                    console.log(results.getTextMessageByAPI.result);
+
+                    //Dialog Message
+                    //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
+                    const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;
+                    //callback(null, '2');
+                    //OR
+                    var messageType = 'non-hsm';
+                    var obj;
+                    if(messageType == 'hsm'){
+                        //NEW HSM
+                        obj = {
+                          "to": sessionIds.get('waId'),
+                          "type": "hsm",
+                          "hsm": {
+                            "namespace": "whatsapp:hsm:fintech:wishfin",
+                            "element_name": "wishfin_product_thanks_whatsapp_template",
+                            "fallback": "en",
+                            "fallback_lc": "US",
+                            "localizable_params": [
+                              {
+                                "default": "Mari"
+                              },
+                              {
+                                "default": "Personal Loan"
+                              },
+                              {
+                                "default": "Personal Loan"
+                              }
+                            ]
+                          }
+                        };
+                    } else {
+                        obj = {
+                          recipient_type: "individual", //"individual" OR "group"
+                          to: sessionIds.get('waId'), //"whatsapp_id" OR "whatsapp_group_id"
+                          type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                          text: {
+                            body: testMessage
+                          }
+                        };
+                    }
+                    var options = {
+                        method: 'POST',
+                        url: config.WA_SERVER_URL + '/v1/messages',
+                        headers:{
+                            authorization: "Bearer " + sessionIds.get('tokenJson'),
+                            'content-type': 'application/json'
+                        },
+                        body: obj,
+                        json: true,
+                        rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
+                    };
+                    request(options, function (error, response, body) {
+                        //console.log(error, response, body);
+                        if (error) {
+                            if (error) callback(new Error(error));
+                        } else {
+                            if (!error && response.statusCode == 200 || response.statusCode == 201) {
+                                console.log("Successfully sendWhatAppMessageByAPI!");
+                                //console.log(body)
+                                callback(null, body);
+                            } else {
+                                console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+                                callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                            }
+                        }
+                    });
+
+                }
+            ],
+        }, function(error, results) {
+            if (error) {
+                console.log("Error!");
+                console.log(error);
+                //return next(error);
+            } else {
+                //console.log("Successfully!");
+                console.log(results);
+                //return next(null, results);
             }
-        ],
-    }, function(error, results) {
-        if (error) {
-            console.log("Error!");
-            console.log(error);
-            //return next(error);
-        } else {
-            //console.log("Successfully!");
-            console.log(results);
-            //return next(null, results);
-        }
-    });
-    
+        });
+    } else {
+        console.log("non-text messages")
+    }
   }
 });
 
