@@ -272,13 +272,12 @@ app.post('/whatsapp-webhook', (req, res) => {
     console.log(sessionIds.get('tokenJson'));
     console.log(sessionIds.get('waId'));
     console.log(sessionIds.get('senderID'));
-    console.log(req.body.messages[0].text.body);
 
     if(!_.isUndefined(req.body.messages[0].text.body)){
+        console.log(req.body.messages[0].text.body);
+
         async.auto({
             getTextMessageByAPI: function(callback) {
-
-
 
                 var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
                 request.on('response', function(response) {
@@ -394,16 +393,7 @@ app.post('/dialogflow-webhook', (req, res) => {
     let city = body.result.parameters['geo-city']; // city is a required param
     console.log(city);
 
-    if (city.length === 0) {
-        res.status(200).json({
-                speech: 'Please select a proper city',
-                displayText: 'Please select a proper city',
-                source: 'weather-detail',
-                query: query,
-            }
-        );
-    }
-        // Performing the action
+    // Performing the action
     if (action !== 'yahooWeatherForecast') {
         // Sending back the results to the agent
         res.status(200).json({
@@ -430,16 +420,26 @@ app.post('/dialogflow-webhook', (req, res) => {
         data = JSON.parse(body);
         //if (!error && response.statusCode == 200) {
         // Sending back the results to the agent
-        var location = data.query.results.channel.location;
-        var condition = data.query.results.channel.item.condition;
-        var temperature = data.query.results.channel.units.temperature;
-        res.status(200).json({
-                speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                source: 'weather-detail',
-                query: query,
-            }
-        );
+        if(!_.isUndefined(data.error)){
+            res.status(200).json({
+                    speech: 'Please select a proper city',
+                    displayText: 'Please select a proper city',
+                    source: 'weather-detail',
+                    query: query,
+                }
+            );
+        } else {
+            var location = data.query.results.channel.location;
+            var condition = data.query.results.channel.item.condition;
+            var temperature = data.query.results.channel.units.temperature;
+            res.status(200).json({
+                    speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                    displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                    source: 'weather-detail',
+                    query: query,
+                }
+            );
+        }
     });
 });
 
