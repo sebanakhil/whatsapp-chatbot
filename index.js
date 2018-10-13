@@ -394,7 +394,16 @@ app.post('/dialogflow-webhook', (req, res) => {
     let city = body.result.parameters['geo-city']; // city is a required param
     console.log(city);
 
-    // Performing the action
+    if (city.length === 0) {
+        res.status(200).json({
+                speech: 'Please select a proper city',
+                displayText: 'Please select a proper city',
+                source: 'weather-detail',
+                query: query,
+            }
+        );
+    }
+        // Performing the action
     if (action !== 'yahooWeatherForecast') {
         // Sending back the results to the agent
         res.status(200).json({
