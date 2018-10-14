@@ -58,7 +58,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
       return res.json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
     }
 
-    phoneValueFormated = phone(req.body.mobile, 'IND');
+    var phoneValueFormated = phone(req.body.mobile, 'IND');
     if(_.isUndefined(phoneValueFormated[0])){
         res.json({'error':'mobile umber is formated properly'});
     }
@@ -96,7 +96,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         checkContactByAPI: ['whatsAppLoginAPI', function (results, callback) {
 
                 //console.log(typeof JSON.parse(results.whatsAppLoginAPI).users);
-                tokenJson = _.chain(JSON.parse(results.whatsAppLoginAPI).users)
+                var tokenJson = _.chain(JSON.parse(results.whatsAppLoginAPI).users)
                               .map(function(o) {
                                 return o.token;
                               })
@@ -162,7 +162,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 //console.log(results.getEvenMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getEvenMessageByAPI.result.fulfillment.messages[0].speech;
 
-                waId = _.chain(results.checkContactByAPI.contacts)
+                var waId = _.chain(results.checkContactByAPI.contacts)
                               .map(function(o) {
                                 return o.wa_id;
                               })
@@ -417,7 +417,7 @@ app.post('/dialogflow-webhook', (req, res) => {
     };
     request(options, function (error, response, body) {
         if (error) throw new Error(error);
-        data = JSON.parse(body);
+        var data = JSON.parse(body);
         //if (!error && response.statusCode == 200) {
         // Sending back the results to the agent
         if(!_.isUndefined(data.error)){
