@@ -107,8 +107,6 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                     sessionIds.set('tokenJson', tokenJson);
                 }
 
-                var username = config.WA_USER_NAME,
-                    password = config.WA_PASSWORD_NAME;
                 var options = {
                     method: 'POST',
                     url: config.WA_SERVER_URL + '/v1/contacts',
