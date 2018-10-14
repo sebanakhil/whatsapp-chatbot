@@ -49,18 +49,16 @@ const sessionIds = new Map();
 // 6. WhatsApp Welcome Message Middleware
 var whatsAppWelcomeMessage = function (req, res, next) {
   
-    if(_.isUndefined(req.body.mobile)){
-        res.json({'error':'mobile umber is required'});
+    if(_.isUndefined(req.params.mobile)){
+      return res.json({'error':'mobile umber is required'});
     }
-
     var pattern = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$/;
-    if (!pattern.test(req.body.mobile)) {
+    if (!pattern.test(req.params.mobile)) {
       return res.json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
     }
-
-    var phoneValueFormated = phone(req.body.mobile, 'IND');
+    var phoneValueFormated = phone(req.params.mobile, 'IND');
     if(_.isUndefined(phoneValueFormated[0])){
-        res.json({'error':'mobile umber is formated properly'});
+      return res.json({'error':'mobile umber is formated properly'});
     }
 
     async.auto({
@@ -184,13 +182,13 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         fallback_lc: "US", 
                         localizable_params: [ 
                           {
-                            default: "Himanshu"
+                            default: "Name"
                           },
                           {
-                            default: "Personal Loan"
+                            default: "XXXX"
                           },
                           {
-                            default: "Personal Loan"
+                            default: "YYYY"
                           } 
                         
                         ]
@@ -248,21 +246,12 @@ var whatsAppWelcomeMessage = function (req, res, next) {
     });
 }
 
-// 7. Routes
-// http://expressjs.com/en/starter/basic-routing.html
-app.get('/', function(request, response) {
-  response.sendFile(__dirname + '/views/index.html');
-});
-
-// 8. Whatsapp Welcome Message Routes
-// assuming POST:   moblie=9716004560           <-- URL encoding
-//
-// or       POST: {"moblie":"9716004560"}       <-- JSON encoding
-app.post("/whatsapp-welcome-message", whatsAppWelcomeMessage, function (req, res) {
+// 7. Whatsapp Welcome Message Routes
+app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage, function (req, res) {
     res.send("This page is authenticated!")
 });
 
-// 9. Whatsapp Webhook Routes
+// 8. Whatsapp Webhook Routes
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
   // Parse the request body from the POST
@@ -312,13 +301,13 @@ app.post('/whatsapp-webhook', (req, res) => {
                             "fallback_lc": "US",
                             "localizable_params": [
                               {
-                                "default": "Mari"
+                                "default": "Name"
                               },
                               {
-                                "default": "Personal Loan"
+                                "default": "XXXX"
                               },
                               {
-                                "default": "Personal Loan"
+                                "default": "YYYY"
                               }
                             ]
                           }
@@ -347,7 +336,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                     request(options, function (error, response, body) {
                         //console.log(error, response, body);
                         if (error) {
-                            if (error) callback(new Error(error));
+                            callback(new Error(error));
                         } else {
                             if (!error && response.statusCode == 200 || response.statusCode == 201) {
                                 console.log("Successfully sendWhatAppMessageByAPI!");
@@ -379,7 +368,7 @@ app.post('/whatsapp-webhook', (req, res) => {
   }
 });
 
-// 10. Dialogflow Webhook Routes
+// 9. Dialogflow Webhook Routes
 // Accepts GET requests at the /webhook endpoint
 app.post('/dialogflow-webhook', (req, res) => {
     console.log('dialogflow webhook is listening');
@@ -392,14 +381,13 @@ app.post('/dialogflow-webhook', (req, res) => {
     console.log(city);
 
     // Performing the action
-    if (action !== 'yahooWeatherForecast') {
+    if (action.length == 0 || (action.length > 0 && action !== 'yahooWeatherForecast')) {
         // Sending back the results to the agent
         res.status(200).json({
                 speech: `undefined action ${action}`,
                 displayText: `undefined action ${action}`,
                 source: 'weather-detail'
-            }
-        );
+        });
     }
 
     var queryString = 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'geo-city\')';
@@ -414,39 +402,46 @@ app.post('/dialogflow-webhook', (req, res) => {
         }
     };
     request(options, function (error, response, body) {
-        if (error) throw new Error(error);
-        var data = JSON.parse(body);
-        //if (!error && response.statusCode == 200) {
-        // Sending back the results to the agent
-        if(!_.isUndefined(data.error)){
-            res.status(200).json({
-                    speech: 'Please select a proper city',
-                    displayText: 'Please select a proper city',
-                    source: 'weather-detail',
-                    query: query,
-                }
-            );
+        //console.log(error, response, body);
+        if (error) {
+            throw new Error(error);
         } else {
-            var location = data.query.results.channel.location;
-            var condition = data.query.results.channel.item.condition;
-            var temperature = data.query.results.channel.units.temperature;
-            res.status(200).json({
-                    speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                    displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                    source: 'weather-detail',
-                    query: query,
+            var data = JSON.parse(body);
+            if (!error && response.statusCode == 200 || response.statusCode == 201) {
+                if(!_.isUndefined(data.error)){
+                    res.status(200).json({
+                            speech: 'Please select a proper city',
+                            displayText: 'Please select a proper city',
+                            source: 'weather-detail',
+                            query: query,
+                        }
+                    );
+                } else {
+                    var location = data.query.results.channel.location;
+                    var condition = data.query.results.channel.item.condition;
+                    var temperature = data.query.results.channel.units.temperature;
+                    res.status(200).json({
+                            speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                            displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                            source: 'weather-detail',
+                            query: query,
+                        }
+                    );
                 }
-            );
+            } else {
+                console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+                callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+            }
         }
     });
 });
 
-// 11. Start the server
+// 10. Start the server
 const server = app.listen(process.env.PORT || 3031, () => {
     console.log('Express listening at ', server.address().port);
 });
 
-// 12. Start the server with secure tunnel
+// 11. Start the server with secure tunnel
 //https://medium.com/@amarjotsingh90/create-secure-tunnel-to-node-js-application-with-ngork-e4806b21bef0
 ngrok.connect({
     proto : 'http',
