@@ -254,28 +254,39 @@ app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage, function (r
 // 8. Whatsapp Webhook Routes
 // Accepts POST requests at /webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {  
-  // Parse the request body from the POST
-  if(req.body.statuses === undefined){
-    console.log(sessionIds.get('tokenJson'));
-    console.log(sessionIds.get('waId'));
-    console.log(sessionIds.get('senderID'));
-
-    if(!_.isUndefined(req.body.messages[0].text)){
-        console.log(req.body.messages[0].text.body);
-
+    // Parse the request body from the POST
+    //if(_.isUndefined(req.body.statuses)){
         async.auto({
             getTextMessageByAPI: function(callback) {
-
-                var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
-                request.on('response', function(response) {
-                    //console.log(response);
-                    callback(null, response);
-                });
-                request.on('error', function(error) {
-                    //console.log(error);
-                    callback(new Error(error));
-                });
-                request.end();
+                if(!_.isUndefined(req.body.messages[0].text)){
+                    var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
+                    request.on('response', function(response) {
+                        //console.log(response);
+                        callback(null, response);
+                    });
+                    request.on('error', function(error) {
+                        //console.log(error);
+                        callback(new Error(error));
+                    });
+                    request.end();
+                } else if(_.isUndefined(req.body.statuses[0].status)){ //req.body.messages[0].image or else except text
+                    var obj = {
+                      "result": {
+                        "fulfillment": {
+                          "speech": "I didn't get that. Only handle text message?",
+                          "messages": [
+                            {
+                              "type": 0,
+                              "speech": "Sorry, Only handle text message."
+                            }
+                          ]
+                        }
+                      }
+                    };
+                    callback(null, obj);
+                } else {
+                    callback(req.body);
+                }
 
             },
             sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
@@ -362,10 +373,7 @@ app.post('/whatsapp-webhook', (req, res) => {
                 //return next(null, results);
             }
         });
-    } else {
-        console.log("non-text messages")
-    }
-  }
+    //}
 });
 
 // 9. Dialogflow Webhook Routes
@@ -378,15 +386,22 @@ app.post('/dialogflow-webhook', (req, res) => {
     let action = body.result.action
     let parameters = body.result.parameters
     let city = body.result.parameters['geo-city']; // city is a required param
-    console.log(city);
-
     // Performing the action
-    if (action.length == 0 || (action.length > 0 && action !== 'yahooWeatherForecast')) {
+    if (action.length === 0 || (action.length > 0 && action !== 'yahooWeatherForecast')) {
         // Sending back the results to the agent
-        res.status(200).json({
-                speech: `undefined action ${action}`,
-                displayText: `undefined action ${action}`,
-                source: 'weather-detail'
+        return res.status(200).json({
+            speech: `undefined action ${action}`,
+            displayText: `undefined action ${action}`,
+            source: 'weather-detail'
+        });
+    }
+
+    if (city.length === 0) {
+        // Sending back the results to the agent
+        return res.status(200).json({
+            speech: `Please select a proper city`,
+            displayText: `Please select a proper city`,
+            source: 'weather-detail'
         });
     }
 
@@ -402,35 +417,28 @@ app.post('/dialogflow-webhook', (req, res) => {
         }
     };
     request(options, function (error, response, body) {
-        //console.log(error, response, body);
         if (error) {
             throw new Error(error);
         } else {
             var data = JSON.parse(body);
             if (!error && response.statusCode == 200 || response.statusCode == 201) {
-                if(!_.isUndefined(data.error)){
-                    res.status(200).json({
-                            speech: 'Please select a proper city',
-                            displayText: 'Please select a proper city',
-                            source: 'weather-detail',
-                            query: query,
-                        }
-                    );
-                } else {
-                    var location = data.query.results.channel.location;
-                    var condition = data.query.results.channel.item.condition;
-                    var temperature = data.query.results.channel.units.temperature;
-                    res.status(200).json({
-                            speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                            displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                            source: 'weather-detail',
-                            query: query,
-                        }
-                    );
-                }
+                var location = data.query.results.channel.location;
+                var condition = data.query.results.channel.item.condition;
+                var temperature = data.query.results.channel.units.temperature;
+                return res.status(200).json({
+                    speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                    displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                    source: 'weather-detail',
+                    query: query,
+                });
             } else {
                 console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
-                callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                return res.status(200).json({
+                    speech: 'Failed calling Send API, ' + response.statusCode + ', ' + response.statusMessage,
+                    displayText: 'Failed calling Send API, ' + response.statusCode + ', ' + response.statusMessage,
+                    source: 'weather-detail',
+                    query: query,
+                });
             }
         }
     });
