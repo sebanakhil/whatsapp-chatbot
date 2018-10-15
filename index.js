@@ -260,7 +260,7 @@ app.post('/whatsapp-webhook', (req, res) => {
     console.log(sessionIds.get('waId'));
     console.log(sessionIds.get('senderID'));
 
-    if(!_.isUndefined(req.body.messages[0].text.body)){
+    if(!_.isUndefined(req.body.messages[0].text)){
         console.log(req.body.messages[0].text.body);
 
         async.auto({
