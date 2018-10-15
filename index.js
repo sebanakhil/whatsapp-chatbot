@@ -237,143 +237,143 @@ var whatsAppWelcomeMessage = function (req, res, next) {
         if (error) {
             console.log("Error!");
             console.log(error);
-            return next(error);
+            //return next(error);
+            return res.status(500).json(error);
         } else {
             //console.log("Successfully!");
             //console.log(results);
-            return next(null, results);
+            //return next(null, results);
+            return res.status(200).json(results);
         }
     });
 }
 
 // 7. Whatsapp Welcome Message Routes
-app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage, function (req, res) {
-    res.send("This page is authenticated!")
-});
+app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage);
 
 // 8. Whatsapp Webhook Routes
 // Accepts POST requests at /webhook endpoint
-app.post('/whatsapp-webhook', (req, res) => {  
+app.post('/whatsapp-webhook', (req, res) => {
+
+    if(!_.isUndefined(req.body.statuses)){
+        return res.status(500).json(req.body);
+    }
     // Parse the request body from the POST
-    //if(_.isUndefined(req.body.statuses)){
-        async.auto({
-            getTextMessageByAPI: function(callback) {
-                if(!_.isUndefined(req.body.messages[0].text)){
-                    var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
-                    request.on('response', function(response) {
-                        //console.log(response);
-                        callback(null, response);
-                    });
-                    request.on('error', function(error) {
-                        //console.log(error);
-                        callback(new Error(error));
-                    });
-                    request.end();
-                } else if(_.isUndefined(req.body.statuses[0].status)){ //req.body.messages[0].image or else except text
-                    var obj = {
-                      "result": {
-                        "fulfillment": {
-                          "speech": "I didn't get that. Only handle text message?",
-                          "messages": [
-                            {
-                              "type": 0,
-                              "speech": "Sorry, Only handle text message."
-                            }
-                          ]
+    async.auto({
+        getTextMessageByAPI: function(callback) {
+            //callback message
+            if(!_.isUndefined(req.body.messages[0].text)){
+                var request = apiAiService.textRequest(req.body.messages[0].text.body, {sessionId: sessionIds.get('senderID')});
+                request.on('response', function(response) {
+                    //console.log(response);
+                    callback(null, response);
+                });
+                request.on('error', function(error) {
+                    //console.log(error);
+                    callback(new Error(error));
+                });
+                request.end();
+            } else { //req.body.messages[0].image or else except text
+                var obj = {
+                  "result": {
+                    "fulfillment": {
+                      "speech": "I didn't get that. Only handle text message?",
+                      "messages": [
+                        {
+                          "type": 0,
+                          "speech": "Sorry, Only handle text message."
                         }
+                      ]
+                    }
+                  }
+                };
+                callback(null, obj);
+            }
+        },
+        sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
+
+                console.log(results.getTextMessageByAPI.result);
+
+                //Dialog Message
+                //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
+                const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;
+                //callback(null, '2');
+                //OR
+                var messageType = 'non-hsm';
+                var obj;
+                if(messageType == 'hsm'){
+                    //NEW HSM
+                    obj = {
+                      "to": sessionIds.get('waId'),
+                      "type": "hsm",
+                      "hsm": {
+                        "namespace": "whatsapp:hsm:fintech:wishfin",
+                        "element_name": "wishfin_product_thanks_whatsapp_template",
+                        "fallback": "en",
+                        "fallback_lc": "US",
+                        "localizable_params": [
+                          {
+                            "default": "Name"
+                          },
+                          {
+                            "default": "XXXX"
+                          },
+                          {
+                            "default": "YYYY"
+                          }
+                        ]
                       }
                     };
-                    callback(null, obj);
                 } else {
-                    callback(req.body);
-                }
-
-            },
-            sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
-
-                    console.log(results.getTextMessageByAPI.result);
-
-                    //Dialog Message
-                    //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
-                    const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;
-                    //callback(null, '2');
-                    //OR
-                    var messageType = 'non-hsm';
-                    var obj;
-                    if(messageType == 'hsm'){
-                        //NEW HSM
-                        obj = {
-                          "to": sessionIds.get('waId'),
-                          "type": "hsm",
-                          "hsm": {
-                            "namespace": "whatsapp:hsm:fintech:wishfin",
-                            "element_name": "wishfin_product_thanks_whatsapp_template",
-                            "fallback": "en",
-                            "fallback_lc": "US",
-                            "localizable_params": [
-                              {
-                                "default": "Name"
-                              },
-                              {
-                                "default": "XXXX"
-                              },
-                              {
-                                "default": "YYYY"
-                              }
-                            ]
-                          }
-                        };
-                    } else {
-                        obj = {
-                          recipient_type: "individual", //"individual" OR "group"
-                          to: sessionIds.get('waId'), //"whatsapp_id" OR "whatsapp_group_id"
-                          type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
-                          text: {
-                            body: testMessage
-                          }
-                        };
-                    }
-                    var options = {
-                        method: 'POST',
-                        url: config.WA_SERVER_URL + '/v1/messages',
-                        headers:{
-                            authorization: "Bearer " + sessionIds.get('tokenJson'),
-                            'content-type': 'application/json'
-                        },
-                        body: obj,
-                        json: true,
-                        rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
+                    obj = {
+                      recipient_type: "individual", //"individual" OR "group"
+                      to: sessionIds.get('waId'), //"whatsapp_id" OR "whatsapp_group_id"
+                      type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                      text: {
+                        body: testMessage
+                      }
                     };
-                    request(options, function (error, response, body) {
-                        //console.log(error, response, body);
-                        if (error) {
-                            callback(new Error(error));
-                        } else {
-                            if (!error && response.statusCode == 200 || response.statusCode == 201) {
-                                console.log("Successfully sendWhatAppMessageByAPI!");
-                                //console.log(body)
-                                callback(null, body);
-                            } else {
-                                console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
-                                callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
-                            }
-                        }
-                    });
-
                 }
-            ],
-        }, function(error, results) {
-            if (error) {
-                console.log("Error!");
-                console.log(error);
-                //return next(error);
-            } else {
-                //console.log("Successfully!");
-                console.log(results);
-                //return next(null, results);
+                var options = {
+                    method: 'POST',
+                    url: config.WA_SERVER_URL + '/v1/messages',
+                    headers:{
+                        authorization: "Bearer " + sessionIds.get('tokenJson'),
+                        'content-type': 'application/json'
+                    },
+                    body: obj,
+                    json: true,
+                    rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
+                };
+                request(options, function (error, response, body) {
+                    //console.log(error, response, body);
+                    if (error) {
+                        callback(new Error(error));
+                    } else {
+                        if (!error && response.statusCode == 200 || response.statusCode == 201) {
+                            console.log("Successfully sendWhatAppMessageByAPI!");
+                            //console.log(body)
+                            callback(null, body);
+                        } else {
+                            console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+                            callback(new Error("Failed calling Send API", response.statusCode, response.statusMessage, body.error));
+                        }
+                    }
+                });
+
             }
-        });
-    //}
+        ],
+    }, function(error, results) {
+        if (error) {
+            console.log("Error!");
+            console.log(error);
+            //return next(error);
+        } else {
+            //console.log("Successfully!");
+            console.log(results);
+            //return next(null, results);
+        }
+    });
 });
 
 // 9. Dialogflow Webhook Routes
