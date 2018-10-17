@@ -368,10 +368,12 @@ app.post('/whatsapp-webhook', (req, res) => {
             console.log("Error!");
             console.log(error);
             //return next(error);
+            return res.status(500).json(error);
         } else {
             //console.log("Successfully!");
             console.log(results);
             //return next(null, results);
+            return res.status(200).json(results);
         }
     });
 });

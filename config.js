@@ -1,5 +1,5 @@
 module.exports = {
-    WA_SERVER_URL: "https://172.16.245.87:11002",
+    WA_SERVER_URL: "https://172.16.245.18:11002",
     WA_USER_NAME: "admin",
     WA_PASSWORD_NAME: "Welcome!1",
     //Dialogflow ACCESS TOEKN  
