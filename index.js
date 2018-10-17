@@ -256,7 +256,7 @@ app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage);
 app.post('/whatsapp-webhook', (req, res) => {
 
     if(!_.isUndefined(req.body.statuses)){
-        return res.status(500).json(req.body);
+        return res.status(200).json(req.body);
     }
     // Parse the request body from the POST
     async.auto({
