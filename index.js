@@ -50,15 +50,15 @@ const sessionIds = new Map();
 var whatsAppWelcomeMessage = function (req, res, next) {
   
     if(_.isUndefined(req.params.mobile)){
-      return res.json({'error':'mobile umber is required'});
+      return res.status(500).json({'error':'mobile umber is required'});
     }
     var pattern = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$/;
     if (!pattern.test(req.params.mobile)) {
-      return res.json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
+      return res.status(500).json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
     }
     var phoneValueFormated = phone(req.params.mobile, 'IND');
     if(_.isUndefined(phoneValueFormated[0])){
-      return res.json({'error':'mobile umber is formated properly'});
+      return res.status(500).json({'error':'mobile umber is formated properly'});
     }
 
     async.auto({
@@ -387,7 +387,9 @@ app.post('/dialogflow-webhook', (req, res) => {
     // Retrieving parameters from the request made by the agent
     let action = body.result.action
     let parameters = body.result.parameters
-    let city = body.result.parameters['geo-city']; // city is a required param
+    //let city = body.result.parameters['geo-city']; // city is a required param
+    //geo-city not support complete city in india and other country too, so create custom parameter CityList and "Errors in 'CityList' entity: The number of synonyms is greater then 200." resolving too.
+    let city = body.result.parameters['CityList'];
     // Performing the action
     if (action.length === 0 || (action.length > 0 && action !== 'yahooWeatherForecast')) {
         // Sending back the results to the agent
