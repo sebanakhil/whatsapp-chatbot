@@ -11,3 +11,7 @@ Quickly set up a webhook for your Dialogflow agent and WhatsApp.
 1. Expose the webhook to test your agent with ngrok `ngrok http 3031` and test in `http://localhost:4040/inspect/http`
 1. Link your agent to your webhook in the Dialogflow console `https://<ngrok_url>/dialogflow-webhook`
 1. Link your WhatApp webhook in the WhatsApp Admin Panel `https://<ngrok_url>/whatsapp-webhook`
+
+## Run Server
+
+You talk to the server through API as: *curl -X GET http://127.0.0.1:3031/whatsapp-welcome-message/:mobilenumber*
