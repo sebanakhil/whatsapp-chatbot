@@ -18,4 +18,4 @@ You talk to the server through API as: *curl -X GET http://127.0.0.1:3031/whatsa
 
 ## Contact
 
-Please contact Prashant Shekher (prashant7july <at> gmail <dot> com) for more information
+Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information
