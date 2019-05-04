@@ -1,37 +1,47 @@
 {
   "name": "whatsapp-chatbot",
   "version": "1.0.0",
-  "description": "An example of webhook for WhatsApp Messenger quick start tutorial.",
+  "description": "Whats App Chatbot for Whether",
+  "contributors": [
+    {
+      "name": "Prashant Shekher",
+      "email": "prashant7july@gmail.com"
+    }
+  ],
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
-  },
-  "author": "",
-  "license": "MIT",
   "dependencies": {
+    "@hapi/joi": "^15.0.1",
     "apiai": "^4.0.3",
-    "async": "^2.6.1",
-    "body-parse": "^0.1.0",
-    "express": "^4.16.3",
-    "lodash": "^4.17.11",
-    "ngrok": "^2.3.0",
+    "async": "^2.6.2",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "lodash": "^4.15.0",
+    "moment-timezone": "^0.5.23",
     "phone": "^2.1.0",
     "request": "^2.88.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^3.8.0"
   },
-  "engines": {
-    "node": "8.x"
+  "devDependencies": {
+    "ngrok": "^3.1.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
-    "url": "https://glitch.com/edit/#!/whatsapp-chatbot"
+    "type": "git",
+    "url": "https://github.com/prashant7july/whatsapp-chatbot.git"
   },
   "keywords": [
     "node",
     "glitch",
-    "express"
-  ],
-  "devDependencies": {
-    "nodemon": "^1.18.4"
-  }
+    "express",
+    "whatsapp",
+    "chatbot",
+    "whether"
+  ]
 }

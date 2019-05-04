@@ -1,0 +1,27 @@
+{
+    "apps": [
+      {
+        "name": "whatsapp-chatbot",
+        "script": "index.js",
+        "interpreter_args": "--harmony",
+        "instances": 0,
+        "exec_mode": "cluster",
+        "watch": true,
+        "ignore_watch": [
+          "logs",
+          "node_modules",
+          "data"
+        ],
+        "min_uptime": 500,
+        "max_restarts": 10,
+        "restart_delay": 1000,
+        "env_development": {
+          "NODE_ENV": "development",
+          "TUNNEL": true
+        },
+        "env_production": {
+          "NODE_ENV": "production"
+        }
+      }
+    ]
+}
