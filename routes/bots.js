@@ -12,6 +12,7 @@ const apiAiService = apiai(process.env.APIAI_CLIENT_ACCESS_TOKEN, {
     language: "en",
     requestSource: "wa"
 });
+const qs = require('querystring');
 
 var whatsappWelcomeMessageValidation = async (req, res, next) => {
 	// fetch the request data
@@ -409,6 +410,7 @@ module.exports = function (app, sessionIds) {
         let city = body.result.parameters['CityList'];
         logger.errorLog.info(`City List: ${city}`);
 
+        // "yahooWeatherForecast" surly change according Google dialogflow due to change the Whether API "Open Weather Maps API"
         // Performing the action
         if (_.isUndefined(action) || (!_.isUndefined(action) > 0 && action !== 'yahooWeatherForecast')) {
             // Sending back the results to the agent
@@ -427,45 +429,39 @@ module.exports = function (app, sessionIds) {
                 source: 'weather-detail'
             });
         }
-
-        var queryString = 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'geo-city\')';
-        var query = _.replace(queryString, /geo-city/g, city);
+        const url = process.env.WEATHER_MAP_API + '?' + qs.stringify({ q: city, APPID: process.env.WEATHER_MAP_APP_ID });
 
         var options = {
-            method: 'POST',
-            url: 'https://query.yahooapis.com/v1/public/yql',
-            form: {
-                q: query,
-                format: 'json'
-            }
+            method: 'GET',
+            url: url,
+            headers:{},
+            rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
         };
         request(options, function (error, response, body) {
-            if (error || response.statusCode !== 201 || response.statusCode !== 201) {
-                logger.errorLog.error('Weather API Execute Failed');
-                logger.errorLog.error(`Weather API URL: ${'https://query.yahooapis.com/v1/public/yql'}`);
-                logger.errorLog.error(`Weather API Error: ${error}`);
-                logger.errorLog.error(`Weather API Response: ${JSON.stringify(response)}`);
-                logger.errorLog.error(`Weather API Body: ${JSON.stringify(body)}`);
+            if (error || response.statusCode !== 200) {
+                logger.errorLog.error('Open Weather Maps API Execute Failed');
+                logger.errorLog.error(`Open Weather Maps API URL: ${url}`);
+                logger.errorLog.error(`Open Weather Maps API Error: ${error}`);
+                logger.errorLog.error(`Open Weather Maps API Response: ${JSON.stringify(response)}`);
+                logger.errorLog.error(`Open Weather Maps API Body: ${JSON.stringify(body)}`);
                 return res.status(200).json({
                     speech: `Failed calling Send API, ${response.statusCode}, ${response.statusMessage}`,
                     displayText: `Failed calling Send API, ${response.statusCode}, ${response.statusMessage}`,
                     source: 'weather-detail',
-                    query: query,
+                    url: url
                 });
             }
             logger.errorLog.info(JSON.stringify(body));
-            logger.errorLog.info('Successfully sendWhatAppMessageByAPI!');
-            var data = JSON.parse(body);
-            var location = data.query.results.channel.location;
-            var condition = data.query.results.channel.item.condition;
-            var temperature = data.query.results.channel.units.temperature;
+            logger.errorLog.info('Open Weather Maps API work successfully!');
+
+            const kelvin = JSON.parse(body).main.temp;
+            const celcius = JSON.parse(body).main.temp - 273.15;
             return res.status(200).json({
-                speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                speech: `The current weather in ${JSON.parse(body).name} is ${celcius} in celcius` ,
+                displayText: `The current weather in ${JSON.parse(body).name} is ${celcius} in celcius` ,
                 source: 'weather-detail',
-                query: query,
+                url: url
             });
         });
     });
-
 };

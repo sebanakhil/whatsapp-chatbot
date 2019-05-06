@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "25e743b9-846c-438b-8515-52e4ea69c6a9",
-		"name": "whatsapp-chatbot",
+		"name": "whatsapp weather bot",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -72,11 +72,83 @@
 						"description": "Generated from a curl request: \ncurl https://query.yahooapis.com/v1/public/yql \\\n   -d q=\\\"select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='Delhi')\\\" \\\n   -d format=json"
 					},
 					"response": []
+				},
+				{
+					"name": "Open Weather Maps 2.0 API",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "54ee45c7-e383-40ba-9eed-b638e1fad0ae",
+								"type": "text/javascript",
+								"exec": [
+									"/*",
+									"",
+									"{",
+									"    \"cod\": 401,",
+									"    \"message\": \"Invalid API key. Please see http://openweathermap.org/faq#error401 for more info.\"",
+									"}",
+									"",
+									"# Now x contains list of nested dictionaries ",
+									"# Check the value of \"cod\" key is equal to ",
+									"# \"404\", means city is found otherwise, ",
+									"# city is not found ",
+									"",
+									"*/"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "q",
+									"value": "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='sdsdfsdfsdfsdf')",
+									"type": "text"
+								},
+								{
+									"key": "format",
+									"value": "json",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://api.openweathermap.org/data/2.5/weather?q=London,uk&APPID=2afc00df2566d02b79c94e7c66b48640",
+							"protocol": "http",
+							"host": [
+								"api",
+								"openweathermap",
+								"org"
+							],
+							"path": [
+								"data",
+								"2.5",
+								"weather"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "London,uk"
+								},
+								{
+									"key": "APPID",
+									"value": "2afc00df2566d02b79c94e7c66b48640"
+								}
+							]
+						},
+						"description": "http://api.openweathermap.org/data/2.5/weather?q=London,uk&APPID=2afc00df2566d02b79c94e7c66b48640\n\n\nIN PHP\n<?php\n$apiKey = \"API KEY\";\n$cityId = \"CITY ID\";\n$googleApiUrl = \"http://api.openweathermap.org/data/2.5/weather?id=\" . $cityId . \"&lang=en&units=metric&APPID=\" . $apiKey;\n\n$ch = curl_init();\n\ncurl_setopt($ch, CURLOPT_HEADER, 0);\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);\ncurl_setopt($ch, CURLOPT_URL, $googleApiUrl);\ncurl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);\ncurl_setopt($ch, CURLOPT_VERBOSE, 0);\ncurl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);\n$response = curl_exec($ch);\n\ncurl_close($ch);\n$data = json_decode($response);\n$currentTime = time();\n?>\n\n<!doctype html>\n<html>\n<head>\n<title>Forecast Weather using OpenWeatherMap with PHP</title>\n\n<style>\nbody {\n    font-family: Arial;\n    font-size: 0.95em;\n    color: #929292;\n}\n\n.report-container {\n    border: #E0E0E0 1px solid;\n    padding: 20px 40px 40px 40px;\n    border-radius: 2px;\n    width: 550px;\n    margin: 0 auto;\n}\n\n.weather-icon {\n    vertical-align: middle;\n    margin-right: 20px;\n}\n\n.weather-forecast {\n    color: #212121;\n    font-size: 1.2em;\n    font-weight: bold;\n    margin: 20px 0px;\n}\n\nspan.min-temperature {\n    margin-left: 15px;\n    color: #929292;\n}\n\n.time {\n    line-height: 25px;\n}\n</style>\n\n</head>\n<body>\n\n    <div class=\"report-container\">\n        <h2><?php echo $data->name; ?> Weather Status</h2>\n        <div class=\"time\">\n            <div><?php echo date(\"l g:i a\", $currentTime); ?></div>\n            <div><?php echo date(\"jS F, Y\",$currentTime); ?></div>\n            <div><?php echo ucwords($data->weather[0]->description); ?></div>\n        </div>\n        <div class=\"weather-forecast\">\n            <img\n                src=\"http://openweathermap.org/img/w/<?php echo $data->weather[0]->icon; ?>.png\"\n                class=\"weather-icon\" /> <?php echo $data->main->temp_max; ?>&deg;C<span\n                class=\"min-temperature\"><?php echo $data->main->temp_min; ?>&deg;C</span>\n        </div>\n        <div class=\"time\">\n            <div>Humidity: <?php echo $data->main->humidity; ?> %</div>\n            <div>Wind: <?php echo $data->wind->speed; ?> km/h</div>\n        </div>\n    </div>\n\n\n</body>\n</html>"
+					},
+					"response": []
 				}
 			]
 		},
 		{
-			"name": "whatsapp-chatbot callback API",
+			"name": "Callback API (Internal Use Only or Testing through Postman)",
 			"description": null,
 			"item": [
 				{
@@ -94,7 +166,7 @@
 							"raw": "{\n  \"id\": \"a4dab5fa-7663-447d-b3d1-db2f29f47914\",\n  \"timestamp\": \"2018-10-09T08:44:45.946Z\",\n  \"lang\": \"en\",\n  \"result\": {\n    \"source\": \"agent\",\n    \"resolvedQuery\": \"Whats is the weather in Delhi\",\n    \"speech\": \"\",\n    \"action\": \"yahooWeatherForecast\",\n    \"actionIncomplete\": false,\n    \"parameters\": {\n      \"geo-city\": \"Delhi\"\n    },\n    \"contexts\": [],\n    \"metadata\": {\n      \"intentId\": \"a9d664eb-9c91-428f-8c95-0ccfb0e60557\",\n      \"webhookUsed\": \"true\",\n      \"webhookForSlotFillingUsed\": \"false\",\n      \"isFallbackIntent\": \"false\",\n      \"intentName\": \"WeatherInfo\"\n    },\n    \"fulfillment\": {\n      \"speech\": \"\",\n      \"messages\": [\n        {\n          \"type\": 0,\n          \"speech\": \"\"\n        }\n      ]\n    },\n    \"score\": 0.7099999785423279\n  },\n  \"status\": {\n    \"code\": 200,\n    \"errorType\": \"success\"\n  },\n  \"sessionId\": \"c412f888-dc6f-09ac-b57e-f887fe7c8a2f\"\n}"
 						},
 						"url": {
-							"raw": "http://127.0.0.1:3031/dialogflow-webhook",
+							"raw": "http://127.0.0.1:3334/dialogflow-webhook",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -102,7 +174,7 @@
 								"0",
 								"1"
 							],
-							"port": "3031",
+							"port": "3334",
 							"path": [
 								"dialogflow-webhook"
 							]
@@ -126,7 +198,7 @@
 							"raw": "{\n    \"messages\": [\n        {\n            \"from\": \"919716004560\",\n            \"id\": \"ABEGkZcWAEVgAhDMlRWgCmkQ0rcAmquZ1I1N\",\n            \"image\": {\n                \"file\": \"/usr/local/wamedia/shared/fee5/3bc5/b4664df8bfbc3597bf48440a\",\n                \"id\": \"fee53bc5-b466-4df8-bfbc-3597bf48440a\",\n                \"mime_type\": \"image/jpeg\",\n                \"sha256\": \"174561e747c25eec2b47882d4104f45c99c627e8a0a70cb4b8abbf8373373b73\"\n            },\n            \"timestamp\": \"1539767822\",\n            \"type\": \"image\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "http://127.0.0.1:3031/whatsapp-webhook",
+							"raw": "http://127.0.0.1:3334/whatsapp-webhook",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -134,7 +206,7 @@
 								"0",
 								"1"
 							],
-							"port": "3031",
+							"port": "3334",
 							"path": [
 								"whatsapp-webhook"
 							]
@@ -143,11 +215,33 @@
 					},
 					"response": []
 				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "d0a107cf-2dbd-42da-ba7c-cad035e69af8",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "66fae3fa-abf5-4e93-af43-5fede87c787e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
 			]
 		},
 		{
-			"name": "whatsapp-chatbot api",
-			"description": null,
+			"name": "Welcome Message Start API",
+			"description": "Even Check on Glitch\n\nhttps://whatsapp-chatbot.glitch.me/whatsapp-welcome-message/9716004560",
 			"item": [
 				{
 					"name": "whatsapp-welcome-message API",
@@ -198,71 +292,52 @@
 						}
 					},
 					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "efe9c416-9fb6-4bbd-9036-cd5b18c6491d",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				},
 				{
-					"name": "whatsapp-welcome-message API Glitch",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "https://whatsapp-chatbot.glitch.me/whatsapp-welcome-message/9716004560",
-							"protocol": "https",
-							"host": [
-								"whatsapp-chatbot",
-								"glitch",
-								"me"
-							],
-							"path": [
-								"whatsapp-welcome-message",
-								"9716004560"
-							]
-						}
-					},
-					"response": []
+					"listen": "test",
+					"script": {
+						"id": "42aff2ed-5176-4e9b-bd09-40db4a4d5091",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				}
 			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "974cb631-a330-4bcf-aa80-31a76b3109a6",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		},
 		{
-			"name": "Dialog-flow",
-			"description": null,
-			"item": [
-				{
-					"name": "dd",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"id\": \"a4dab5fa-7663-447d-b3d1-db2f29f47914\",\n  \"timestamp\": \"2018-10-09T08:44:45.946Z\",\n  \"lang\": \"en\",\n  \"result\": {\n    \"source\": \"agent\",\n    \"resolvedQuery\": \"Whats is the weather in Delhi\",\n    \"speech\": \"\",\n    \"action\": \"yahooWeatherForecast\",\n    \"actionIncomplete\": false,\n    \"parameters\": {\n      \"geo-city\": \"Delhi\"\n    },\n    \"contexts\": [],\n    \"metadata\": {\n      \"intentId\": \"a9d664eb-9c91-428f-8c95-0ccfb0e60557\",\n      \"webhookUsed\": \"true\",\n      \"webhookForSlotFillingUsed\": \"false\",\n      \"isFallbackIntent\": \"false\",\n      \"intentName\": \"WeatherInfo\"\n    },\n    \"fulfillment\": {\n      \"speech\": \"\",\n      \"messages\": [\n        {\n          \"type\": 0,\n          \"speech\": \"\"\n        }\n      ]\n    },\n    \"score\": 0.7099999785423279\n  },\n  \"status\": {\n    \"code\": 200,\n    \"errorType\": \"success\"\n  },\n  \"sessionId\": \"c412f888-dc6f-09ac-b57e-f887fe7c8a2f\"\n}"
-						},
-						"url": {
-							"raw": "http://127.0.0.1:3031/dialogflow-webhook",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "3031",
-							"path": [
-								"dialogflow-webhook"
-							]
-						},
-						"description": "Generated from a curl request: \ncurl -X POST -H 'Content-Type: application/json' -d '{\\\"id\\\":\\\"a4dab5fa-7663-447d-b3d1-db2f29f47914\\\",\\\"timestamp\\\":\\\"2018-10-09T08:44:45.946Z\\\",\\\"lang\\\":\\\"en\\\",\\\"result\\\":{\\\"source\\\":\\\"agent\\\",\\\"resolvedQuery\\\":\\\"Whats is the weather in Delhi\\\",\\\"speech\\\":\\\"\\\",\\\"action\\\":\\\"yahooWeatherForecast\\\",\\\"actionIncomplete\\\":false,\\\"parameters\\\":{\\\"geo-city\\\":\\\"Delhi\\\"},\\\"contexts\\\":[],\\\"metadata\\\":{\\\"intentId\\\":\\\"a9d664eb-9c91-428f-8c95-0ccfb0e60557\\\",\\\"webhookUsed\\\":\\\"true\\\",\\\"webhookForSlotFillingUsed\\\":\\\"false\\\",\\\"isFallbackIntent\\\":\\\"false\\\",\\\"intentName\\\":\\\"WeatherInfo\\\"},\\\"fulfillment\\\":{\\\"speech\\\":\\\"\\\",\\\"messages\\\":[{\\\"type\\\":0,\\\"speech\\\":\\\"\\\"}]},\\\"score\\\":0.7099999785423279},\\\"status\\\":{\\\"code\\\":200,\\\"errorType\\\":\\\"success\\\"},\\\"sessionId\\\":\\\"c412f888-dc6f-09ac-b57e-f887fe7c8a2f\\\"}' 'https://b0358ad9.ngrok.io/dialogflow-webhook'"
-					},
-					"response": []
-				}
-			]
+			"listen": "test",
+			"script": {
+				"id": "824664cc-6425-464e-b767-2aed6f06998a",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
