@@ -8,7 +8,6 @@ const
   async = require("async"),
   apiai = require("apiai"),
   uuid = require('uuid'),
-  phone = require('phone'),
   _ = require('lodash'),
   ngrok = require('ngrok');
 
@@ -48,34 +47,36 @@ const sessionIds = new Map();
 
 // 6. WhatsApp Welcome Message Middleware
 var whatsAppWelcomeMessage = function (req, res, next) {
-  
-    if(_.isUndefined(req.params.mobile)){
-      return res.status(500).json({'error':'mobile umber is required'});
-    }
-    var pattern = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$/;
+
+    var pattern = /^\+91[6-9]\d{9}$/;
     if (!pattern.test(req.params.mobile)) {
-      return res.status(500).json({'error':'Mobile must be 10 digits with no comma, no spaces, no punctuation and there will be no + sign!'});
-    }
-    var phoneValueFormated = phone(req.params.mobile, 'IND');
-    if(_.isUndefined(phoneValueFormated[0])){
-      return res.status(500).json({'error':'mobile umber is formated properly'});
+        return res.status(500).json({'error':'Mobile must be 10 digits with india country code + sign!'});
     }
 
     async.auto({
         whatsAppLoginAPI: function(callback) {
 
-            var username = config.WA_USER_NAME,
+            let username = config.WA_USER_NAME,
                 password = config.WA_PASSWORD_NAME;
+            let encodedData = "" ;
+            if (typeof Buffer.from === "function") {
+                // Node 5.10+
+                encodedData = Buffer.from(username + ":" + password).toString('base64')
+            } else {
+                // older Node versions, now deprecated
+                encodedData = new Buffer(username + ":" + password).toString("base64")
+            }
+
             var options = {
                 method: 'POST',
                 url: config.WA_SERVER_URL + '/v1/users/login',
                 headers:{       
-                    authorization: "Basic " + new Buffer(username + ":" + password).toString("base64"),
+                    authorization: "Basic " + encodedData,
                     'content-type': 'application/json' 
                 },
                 rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
             };
-
+            console.log(options)
             request(options, function (error, response, body) {
                 if (error) {
                     if (error) callback(new Error(error));
@@ -112,7 +113,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                         authorization: "Bearer " + tokenJson,
                         'content-type': 'application/json' 
                     },
-                    body: { blocking: 'wait', contacts: [ phoneValueFormated[0] ] },
+                    body: { blocking: 'wait', contacts: [ req.params.mobile ] },
                     json: true,
                     rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
                 };
@@ -172,28 +173,55 @@ var whatsAppWelcomeMessage = function (req, res, next) {
                 var messageType = 'non-hsm';
                 var obj;
                 if(messageType == 'hsm'){
-                    obj = {
-                      to: waId,
-                      type: "hsm",
-                      hsm: { 
-                        namespace: "whatsapp:hsm:fintech:wishfin",
-                        element_name: "wishfin_product_thanks_whatsapp_template", 
-                        fallback: "en", 
-                        fallback_lc: "US", 
-                        localizable_params: [ 
-                          {
-                            default: "Name"
-                          },
-                          {
-                            default: "XXXX"
-                          },
-                          {
-                            default: "YYYY"
-                          } 
-                        
-                        ]
-                      }
-                    };
+                    if(config.WA_VERSION == 'v2.18.16'){ //Old Version which is lower 2.21.4
+                        //OLD HSM
+                        obj = {
+                            "to": waId,
+                            "type": "hsm",
+                            "hsm": {
+                                "namespace": config.WA_HSM_NAMESPACE,
+                                "element_name": config.WA_HSM_ELEMENT_NAME,
+                                "fallback": "en",
+                                "fallback_lc": "US",
+                                "localizable_params": [
+                                    {
+                                        "default": "Name"
+                                    },
+                                    {
+                                        "default": "XXXX"
+                                    },
+                                    {
+                                        "default": "YYYY"
+                                    }
+                                ]
+                            }
+                        };
+                    } else { //2.21.4 - New HSM
+                        //NEW HSM
+                        obj = {
+                            "to": waId,
+                            "type": "hsm",
+                            "hsm": {
+                                "namespace": config.WA_HSM_NAMESPACE,
+                                "element_name": config.WA_HSM_ELEMENT_NAME,
+                                "language": {
+                                    "policy": "deterministic",
+                                    "code": "en",
+                                },
+                                "localizable_params": [
+                                    {
+                                        "default": "Name"
+                                    },
+                                    {
+                                        "default": "XXXX"
+                                    },
+                                    {
+                                        "default": "YYYY"
+                                    }
+                                ]
+                            }
+                        };
+                    }
                 } else {
                     obj = {
                       recipient_type: "individual", //"individual" OR "group"
@@ -252,7 +280,7 @@ var whatsAppWelcomeMessage = function (req, res, next) {
 app.get("/whatsapp-welcome-message/:mobile", whatsAppWelcomeMessage);
 
 // 8. Whatsapp Webhook Routes
-// Accepts POST requests at /webhook endpoint
+// Accepts POST requests at /whatsapp-webhook endpoint
 app.post('/whatsapp-webhook', (req, res) => {
 
     if(!_.isUndefined(req.body.statuses)){
@@ -293,37 +321,63 @@ app.post('/whatsapp-webhook', (req, res) => {
         sendWhatAppMessageByAPI: ['getTextMessageByAPI', function (results, callback) {
 
                 console.log(results.getTextMessageByAPI.result);
-
                 //Dialog Message
                 //console.log(results.getTextMessageByAPI.result.fulfillment.messages[0].speech);
                 const testMessage = results.getTextMessageByAPI.result.fulfillment.messages[0].speech;
                 //callback(null, '2');
                 //OR
-                var messageType = 'non-hsm';
+                var messageType = 'no-hsm';
                 var obj;
                 if(messageType == 'hsm'){
-                    //NEW HSM
-                    obj = {
-                      "to": sessionIds.get('waId'),
-                      "type": "hsm",
-                      "hsm": {
-                        "namespace": "whatsapp:hsm:fintech:wishfin",
-                        "element_name": "wishfin_product_thanks_whatsapp_template",
-                        "fallback": "en",
-                        "fallback_lc": "US",
-                        "localizable_params": [
-                          {
-                            "default": "Name"
-                          },
-                          {
-                            "default": "XXXX"
-                          },
-                          {
-                            "default": "YYYY"
-                          }
-                        ]
-                      }
-                    };
+                    if(config.WA_VERSION == 'v2.18.16'){ //Old Version which is lower 2.21.4
+                        //OLD HSM
+                        obj = {
+                            "to": sessionIds.get('waId'),
+                            "type": "hsm",
+                            "hsm": {
+                                "namespace": config.WA_HSM_NAMESPACE,
+                                "element_name": config.WA_HSM_ELEMENT_NAME,
+                                "fallback": "en",
+                                "fallback_lc": "US",
+                                "localizable_params": [
+                                    {
+                                        "default": "Name"
+                                    },
+                                    {
+                                        "default": "XXXX"
+                                    },
+                                    {
+                                        "default": "YYYY"
+                                    }
+                                ]
+                            }
+                        };
+                    } else { //2.21.4 - New HSM
+                        //NEW HSM
+                        obj = {
+                            "to": sessionIds.get('waId'),
+                            "type": "hsm",
+                            "hsm": {
+                                "namespace": config.WA_HSM_NAMESPACE,
+                                "element_name": config.WA_HSM_ELEMENT_NAME,
+                                "language": {
+                                    "policy": "deterministic",
+                                    "code": "en",
+                                },
+                                "localizable_params": [
+                                    {
+                                        "default": "Name"
+                                    },
+                                    {
+                                        "default": "XXXX"
+                                    },
+                                    {
+                                        "default": "YYYY"
+                                    }
+                                ]
+                            }
+                        };
+                    }
                 } else {
                     obj = {
                       recipient_type: "individual", //"individual" OR "group"
@@ -381,7 +435,6 @@ app.post('/whatsapp-webhook', (req, res) => {
 // 9. Dialogflow Webhook Routes
 // Accepts GET requests at the /webhook endpoint
 app.post('/dialogflow-webhook', (req, res) => {
-    console.log('dialogflow webhook is listening');
     let body = req.body
 
     // Retrieving parameters from the request made by the agent
@@ -409,15 +462,16 @@ app.post('/dialogflow-webhook', (req, res) => {
         });
     }
 
-    var queryString = 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\'geo-city\')';
-    var query = _.replace(queryString, /geo-city/g, city);
-
     var options = {
-        method: 'POST',
-        url: 'https://query.yahooapis.com/v1/public/yql',
-        form: {
-            q: query,
-            format: 'json'
+        method: 'GET',
+        url: 'http://api.openweathermap.org/data/2.5/weather',
+        qs: {
+            q: city,
+            units: 'metric',
+            APPID: config.OPENWEATHERMAP_API_KEY
+        },
+        headers: {
+            'Cache-Control': 'no-cache'
         }
     };
     request(options, function (error, response, body) {
@@ -426,14 +480,11 @@ app.post('/dialogflow-webhook', (req, res) => {
         } else {
             var data = JSON.parse(body);
             if (!error && response.statusCode == 200 || response.statusCode == 201) {
-                var location = data.query.results.channel.location;
-                var condition = data.query.results.channel.item.condition;
-                var temperature = data.query.results.channel.units.temperature;
                 return res.status(200).json({
-                    speech: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
-                    displayText: 'The current weather in ' + location.city + ',' + location.region + ' is ' + condition.temp + '°' + temperature,
+                    speech: 'The current weather in ' + city + ' is ' + data.main.temp + '°C',
+                    displayText: 'The current weather in ' + city + ' is ' + data.main.temp + '°C',
                     source: 'weather-detail',
-                    query: query,
+                    //query: query,
                 });
             } else {
                 console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
@@ -441,10 +492,11 @@ app.post('/dialogflow-webhook', (req, res) => {
                     speech: 'Failed calling Send API, ' + response.statusCode + ', ' + response.statusMessage,
                     displayText: 'Failed calling Send API, ' + response.statusCode + ', ' + response.statusMessage,
                     source: 'weather-detail',
-                    query: query,
+                    //query: query,
                 });
             }
         }
+        console.log(body);
     });
 });
 
