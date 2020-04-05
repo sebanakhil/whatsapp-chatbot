@@ -6,14 +6,22 @@
 # WHATAPP CHATBOT Notification Server
 PORT=3334
 
-# WhatsApp Business Detail for PL HDFC Instance
-WA_HOST=10.0.20.99
-WA_PORT=11002
-WA_USER=admin
-WA_PASSWORD=Welcome!1
+# WhatsApp Business Detail
+WA_VERSION=2.21.4
+WA_HOST=120.0.0.1
+WA_PORT=8080
+WA_USERNAME=xxxxxx
+WA_PASSWORD=xxxxxxx
+# WhatsApp Highly Structured Message
+WA_HSM_NAMESPACE=whatsapp:hsm:xxxxx:xxxxx
+WA_HSM_ELEMENT_NAME=hsm_template
 
-# Dialogflow ACCESS TOEKN  
-APIAI_CLIENT_ACCESS_TOKEN=7112d644ff7c42f6bde91c8955507bce
+# Dialogflow ACCESS TOEKN
+APIAI_CLIENT_ACCESS_TOKEN=xxxxxxxxxxxxx
+
+# Open Weather Maps API
+WEATHER_MAP_API=http://api.openweathermap.org/data/2.5/weather
+WEATHER_MAP_APP_ID=xxxxxxxxxxxx
 ```
 
 ## Install node.js and npm (Optional)
@@ -31,6 +39,49 @@ So, assuming that all of the above was successful, you’re now ready to boot up
 
 * $ npm install (install both "dependencies" & "devDependencies") for local server only
 * $ npm install --prod will only install "dependencies" for Production or Stage server Only due to stage is the true copy of production
+
+## Local Setup First Time
+## Step 1:
+
+* $ node index.js
+```
+Server is listinging on 3334
+```
+
+## Step 2:
+
+* $ ./ngrok http 3334
+```
+ngrok by @inconshreveable
+
+Session Status                online
+Session Expires               7 hours, 59 minutes
+Update                        update available (version 2.3.35, Ctrl-U to update)
+Version                       2.3.25
+Region                        United States (us)
+Web Interface                 http://127.0.0.1:4040
+Forwarding                    http://29697eb2.ngrok.io -> http://localhost:3334
+Forwarding                    https://29697eb2.ngrok.io -> http://localhost:3334
+
+Connections                   ttl     opn     rt1     rt5     p50     p90
+                              0       0       0.00    0.00    0.00    0.00
+```
+
+## Step 3:
+
+* For ngrok, in Address bar - https://localhost:4040
+
+## Step 4:
+
+* In Address bar - https://172.16.245.60:11004
+* Webhook URL: Link your WhatApp Webhooks URL in the WhatsApp Admin Panel `https://<ngrok_url>/whatsapp-webhook`<br/>
+* Example: https://29697eb2.ngrok.io/whatsapp-webhook
+
+## Step 5:
+
+* In Dialogflow `https://dialogflow.cloud.google.com/#/login`, select fulfillment and set Webhook URL*
+* Link your agent to your webhook in the Dialogflow Console `https://<ngrok_url>/dialogflow-webhook`
+* Example: https://29697eb2.ngrok.io/dialogflow-webhook
 
 ## Local Setup First Time
 

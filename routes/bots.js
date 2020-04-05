@@ -21,30 +21,27 @@ var whatsappWelcomeMessageValidation = async (req, res, next) => {
 	const schema = Joi.object().keys({
 		mobile: Joi.string().regex(/^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[6789]\d{9}$/).required().label("mobile number is requireds"),
 	});
-	// validate the request data against the schema
-	await Joi.validate(query, schema, (err, value) => {
-			if (err) {
-				// send a 400 error response if validation fails
-				// res.status(400).json({status: "error", message: "Invalid request data", data: data});
-
-				// Joi Error
-				const JoiError = {
-					status: 'failed',
-					error: {
-						original: err._object,
-						// fetch only message and type from each error
-						details: _.map(err.details, ({message, type}) => ({
-							message: message.replace(/['"]/g, ''),
-							type
-						}))
-					}
-				};
-				// Send back the JSON error response
-				res.status(422).json(JoiError);
-			} else {
-				next();
-			}
-	});
+    // validate the request data against the schema
+    try {
+        const value  = await schema.validateAsync({ mobile: req.params.mobile });
+        next();
+    } catch (err) {
+        // send a 400 error response if validation fails
+	    // res.status(400).json({status: "error", message: "Invalid request data", data: data});
+        const JoiError = {
+            status: 'failed',
+            error: {
+                original: err._object,
+                // fetch only message and type from each error
+                details: _.map(err.details, ({message, type}) => ({
+                    message: message.replace(/['"]/g, ''),
+                    type
+                }))
+            }
+        };
+        // Send back the JSON error response
+        res.status(422).json(JoiError);
+    }
 };
 
 module.exports = function (app, sessionIds) {
@@ -60,11 +57,23 @@ module.exports = function (app, sessionIds) {
                             return callback(null, { "accessToken" : sessionIds.get('accessToken') });
                         }
 
+                        let username = process.env.WA_USERNAME,
+                            password = process.env.WA_PASSWORD;
+                        let encodedData = "" ;
+                        if (typeof Buffer.from === "function") {
+                            // Node 5.10+
+                            encodedData = Buffer.from(username + ":" + password).toString('base64')
+                        } else {
+                            // older Node versions, now deprecated
+                            encodedData = new Buffer(username + ":" + password).toString("base64")
+                        }
+
+                        let url = 'https://' + process.env.WA_HOST + ':' + process.env.WA_PORT + '/v1/users/login';
                         var options = {
                             method: 'POST',
-                            url: 'https://' + process.env.WA_HOST + ':' + process.env.WA_PORT + '/v1/users/login',
+                            url: url,
                             headers:{       
-                                authorization: "Basic " + Buffer.from(process.env.WA_USER + ":" + process.env.WA_PASSWORD).toString("base64"),
+                                authorization: "Basic " + encodedData,
                                 'content-type': 'application/json' 
                             },
                             rejectUnauthorized: false //Error: Error: self signed certificate in certificate chain
@@ -170,68 +179,69 @@ module.exports = function (app, sessionIds) {
                             sessionIds.set('waId', waId);
                         }
         
-                        var messageType = 'hsm';
+                        var messageType = 'no-hsm';
                         var obj;
                         if(messageType == 'hsm'){
-                            /*
-                            obj = {
-                                to: waId,
-                                type: "hsm",
-                                hsm: {
-                                    namespace: "whatsapp:hsm:fintech:wishfin",
-                                    element_name: "wishfin_product_thanks_whatsapp_template", 
-                                    fallback: "en", 
-                                    fallback_lc: "US", 
-                                    localizable_params: [ 
-                                        {
-                                            default: "Name"
+                            if(process.env.WA_VERSION == 'v2.18.16'){ //Old Version which is lower 2.21.4
+                                //OLD HSM
+                                obj = {
+                                    "to": waId,
+                                    "type": "hsm",
+                                    "hsm": {
+                                        "namespace": process.env.WA_HSM_NAMESPACE,
+                                        "element_name": process.env.WA_HSM_ELEMENT_NAME,
+                                        "fallback": "en",
+                                        "fallback_lc": "US",
+                                        "localizable_params": [
+                                            {
+                                                "default": "Name"
+                                            },
+                                            {
+                                                "default": "XXXX"
+                                            },
+                                            {
+                                                "default": "YYYY"
+                                            }
+                                        ]
+                                    }
+                                };
+                            } else { //2.21.4 - New HSM
+                                //NEW HSM
+                                obj = {
+                                    "to": waId,
+                                    "type": "hsm",
+                                    "hsm": {
+                                        "namespace": process.env.WA_HSM_NAMESPACE,
+                                        "element_name": process.env.WA_HSM_ELEMENT_NAME,
+                                        "language": {
+                                            "policy": "deterministic",
+                                            "code": "en",
                                         },
-                                        {
-                                            default: "XXXX"
-                                        },
-                                        {
-                                            default: "YYYY"
-                                        } 
-                                    ]
-                                }
-                            };
-                            */
-                            
-                            //For WhatsApp Version v2.21.6
-                            obj = {
-                                to: waId,
-                                type: "hsm",
-                                hsm: {
-                                    namespace: "whatsapp:hsm:fintech:wishfin",
-                                    element_name: "wishfin_product_thanks_whatsapp_template",
-                                    language: {
-                                        policy: "fallback",
-                                        code: "en"
-                                    },           
-                                    localizable_params: [
-                                        {
-                                            default: "Prashant"
-                                        },
-                                        {
-                                            default: "Personal Loan"
-                                        },
-                                        {
-                                            default: "Personal Loan"
-                                        }
-                                    ]
-                                }
-                            };
+                                        "localizable_params": [
+                                            {
+                                                "default": "Name"
+                                            },
+                                            {
+                                                "default": "XXXX"
+                                            },
+                                            {
+                                                "default": "YYYY"
+                                            }
+                                        ]
+                                    }
+                                };
+                            }
                         } else {
                             obj = {
-                                recipient_type: "individual", //"individual" OR "group"
-                                to: waId, //"whatsapp_id" OR "whatsapp_group_id"
-                                type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
-                                text: {
+                              recipient_type: "individual", //"individual" OR "group"
+                              to: waId, //"whatsapp_id" OR "whatsapp_group_id"
+                              type: "text", //"audio" OR "document" OR "hsm" OR "image" OR "text"
+                              text: {
                                 body: testMessage
-                                }
+                              }
                             }
                         }
-        
+
                         var options = {
                             method: 'POST',
                             url: 'https://' + process.env.WA_HOST + ':' + process.env.WA_PORT + '/v1/messages',
@@ -407,7 +417,7 @@ module.exports = function (app, sessionIds) {
         let parameters = body.result.parameters
         //let city = body.result.parameters['geo-city']; // city is a required param
         //geo-city not support complete city in india and other country too, so create custom parameter CityList and "Errors in 'CityList' entity: The number of synonyms is greater then 200." resolving too.
-        let city = body.result.parameters['CityList'];
+        let city = body.result.parameters['geo-city'];
         logger.errorLog.info(`City List: ${city}`);
 
         // "yahooWeatherForecast" surly change according Google dialogflow due to change the Whether API "Open Weather Maps API"
@@ -421,7 +431,7 @@ module.exports = function (app, sessionIds) {
             });
         }
 
-        if (_.isUndefined(city)) { //city.length === 0
+        if (_.isEmpty(city)) { //city.length === 0
             // Sending back the results to the agent
             return res.status(200).json({
                 speech: `Please select a proper city`,
@@ -429,8 +439,8 @@ module.exports = function (app, sessionIds) {
                 source: 'weather-detail'
             });
         }
-        const url = process.env.WEATHER_MAP_API + '?' + qs.stringify({ q: city, APPID: process.env.WEATHER_MAP_APP_ID });
 
+        const url = process.env.WEATHER_MAP_API + '?' + qs.stringify({ q: city, units: 'metric', APPID: process.env.WEATHER_MAP_APP_ID });
         var options = {
             method: 'GET',
             url: url,
@@ -454,8 +464,7 @@ module.exports = function (app, sessionIds) {
             logger.errorLog.info(JSON.stringify(body));
             logger.errorLog.info('Open Weather Maps API work successfully!');
 
-            const kelvin = JSON.parse(body).main.temp;
-            const celcius = JSON.parse(body).main.temp - 273.15;
+            const celcius = JSON.parse(body).main.temp;
             return res.status(200).json({
                 speech: `The current weather in ${JSON.parse(body).name} is ${celcius} in celcius` ,
                 displayText: `The current weather in ${JSON.parse(body).name} is ${celcius} in celcius` ,
