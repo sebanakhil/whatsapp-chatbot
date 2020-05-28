@@ -13,9 +13,9 @@ Quickly set up a webhook for your Dialogflow agent and WhatsApp.
 1. Expose the webhook to test your agent with ngrok `ngrok http 3031` and test in `http://localhost:4040/inspect/http`
 1. Link your agent to your webhook in the Dialogflow Console `https://<ngrok_url>/dialogflow-webhook`
 1. Link your WhatApp webhook in the WhatsApp Admin Panel `https://<ngrok_url>/whatsapp-webhook`<br/>
-   ![Whatsapp Callback URL](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/whatsapp_business_webhook.png)<br/>
-   ![Chatbot in Mobile Application Development](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/Escalation-of-Chatbot-in-Mobile-Application-Development-1.png)<br/>
-   ![whatsapp-dialogflow](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/whatsapp-dialogflow.jpg)
+   ![Whatsapp Callback URL](https://github.com/prashant7july/whatsapp-chatbot/blob/master/whatsapp_business_webhook.png)<br/>
+   ![Chatbot in Mobile Application Development](https://github.com/prashant7july/whatsapp-chatbot/blob/master/Escalation-of-Chatbot-in-Mobile-Application-Development-1.png)<br/>
+   ![whatsapp-dialogflow](https://github.com/prashant7july/whatsapp-chatbot/blob/master/whatsapp-dialogflow.jpg)
 
 ## Run Server
 
@@ -171,4 +171,4 @@ OR
 
 Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information. If this project help you reduce time to develop, you can give me a cup of coffee with GPay. :)
 
-![Contact n Donate](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/qrcode.jpg)
+![Contact n Donate](https://github.com/prashant7july/whatsapp-chatbot/blob/master/qrcode.jpg)
