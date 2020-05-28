@@ -38,7 +38,7 @@ was to hit either in curl or through Postman collection. This will start whatsap
    I am using 3 different service -
    1) WhatsApp Business API (paid service)
    2) Dialogflow for AI (NLP) (free service)
-   3) Openweather(yahoo depricted) API for weather forecast (free service)
+   3) Openweather(yahoo deprecated) API for weather forecast (free service)
 
 ## OpenWeatherMap API - Access Current Weather Data For One Location
 
@@ -167,7 +167,8 @@ OR
 - Details of your plan https://openweathermap.org/price
 - Please, note that 16-days daily forecast and History API are not available for Free subscribers
 
-## Contact
+## Contact n Donation
 
-Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information
+Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information. If this project help you reduce time to develop, you can give me a cup of coffee :)
 
+![Contact n Donation](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/qrcode.jpg)
