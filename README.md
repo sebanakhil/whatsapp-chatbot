@@ -167,8 +167,8 @@ OR
 - Details of your plan https://openweathermap.org/price
 - Please, note that 16-days daily forecast and History API are not available for Free subscribers
 
-## Contact n Donation
+## Contact n Donate
 
-Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information. If this project help you reduce time to develop, you can give me a cup of coffee :)
+Please contact Prashant Shekher (prashant7july \<at\> gmail \<dot\> com) for more information. If this project help you reduce time to develop, you can give me a cup of coffee with GPay. :)
 
-![Contact n Donation](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/qrcode.jpg)
+![Contact n Donate](https://github.com/prashant7july/whatsapp-chatbot/blob/v1.0.0/qrcode.jpg)
